@@ -1,0 +1,403 @@
+/** SalesPage: registra ventas y permite consultar sus detalles. Historia: HU-05. Props: ninguna; delega estado y operaciones a useSalesPage. */
+import { CircleCheck, FileDown, Trash2 } from 'lucide-react'
+import { BookFormModal } from '../../books/components/BookFormModal'
+import { ClientFormModal } from '../../clients/components/ClientFormModal'
+import { MessageModal } from '../../../shared/components/MessageModal'
+import { Modal } from '../../../shared/components/Modal'
+import { SectionHeader } from '../../../shared/components/SectionHeader'
+import { formatCurrency, formatDateTime } from '../../../shared/utils/format'
+import { getSaleNumber } from '../../../shared/utils/sale'
+import { useSalesPage } from '../hooks/useSalesPage'
+
+export const SalesPage = () => {
+  const {
+    books,
+    booksPage,
+    totalBooksPages,
+    booksPageNumbers,
+    isBooksLoading,
+    booksError,
+    reloadBooks,
+    filteredBooks,
+    filteredClients,
+    cart,
+    clientId,
+    subtotal,
+    lastSale,
+    isSubmitting,
+    saleError,
+    addBook,
+    updateQuantity,
+    setClientId,
+    completeSale,
+    isClientModalOpen,
+    clientForm,
+    clientSearch,
+    bookSearch,
+    clientSubmitError,
+    bookSubmitError,
+    saleSuccessMessage,
+    createSuccessMessage,
+    isClientResultsOpen,
+    isBookResultsOpen,
+    isBookModalOpen,
+    isCreateSuccessModalOpen,
+    removeItemTargetBookId,
+    updateClientForm,
+    setBookTitle,
+    setBookAuthor,
+    setBookCategory,
+    setBookPrice,
+    setBookStock,
+    setBooksPage,
+    bookTitle,
+    bookAuthor,
+    bookCategory,
+    bookPrice,
+    bookStock,
+    handleClientSearchChange,
+    handleBookSearchChange,
+    selectClient,
+    selectBook,
+    exportLastSaleBill,
+    openClientModal,
+    openBookModal,
+    closeClientModal,
+    closeBookModal,
+    closeCreateSuccessModal,
+    requestRemoveItemConfirmation,
+    cancelRemoveItemConfirmation,
+    confirmRemoveItem,
+    submitClient,
+    submitBook,
+    closeSaleDetail,
+  } = useSalesPage()
+
+  const isUnauthenticatedBooksError = booksError.toLowerCase().includes('unauthenticated')
+
+  return (
+    <div>
+      <SectionHeader title="Ventas POS" description="Cobro rápido con validación de existencias en tiempo real y totales del carrito." />
+
+      <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="relative min-w-[260px] flex-1 grid gap-1 text-sm text-slate-700">
+            Buscar cliente
+            <input
+              className="rounded-xl border border-slate-200 px-3 py-2"
+              placeholder="Escriba el ID o el nombre del cliente"
+              value={clientSearch}
+              onChange={(event) => handleClientSearchChange(event.target.value)}
+            />
+            {clientSearch.trim() && isClientResultsOpen ? (
+              <div className="absolute top-[calc(100%+4px)] z-20 max-h-56 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+                {filteredClients.length > 0 ? (
+                  filteredClients.map((client) => (
+                    <button
+                      key={client.id}
+                      type="button"
+                      className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+                      onClick={() => selectClient(client.id, client.name)}
+                    >
+                      <span className="font-medium text-slate-900">{client.name}</span>
+                      <span className="ml-2 text-slate-500">#{client.id}</span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-2 text-sm text-slate-500">No se encontraron clientes</p>
+                )}
+              </div>
+            ) : null}
+          </label>
+
+          <label className="min-w-[220px] grid gap-1 text-sm text-slate-700">
+            Cliente seleccionado
+            <select
+              className="rounded-xl border border-slate-200 px-3 py-2"
+              value={clientId ?? ''}
+              onChange={(event) =>
+                setClientId(event.target.value ? Number(event.target.value) : null)
+              }
+            >
+              <option value="">Seleccione un cliente</option>
+              {filteredClients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.id} - {client.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button className="rounded-xl bg-slate-900 px-4 py-2 text-white" onClick={openClientModal}>
+            Nuevo cliente
+          </button>
+
+          <label className="relative min-w-[260px] flex-1 grid gap-1 text-sm text-slate-700">
+            Buscar libro
+            <input
+              className="rounded-xl border border-slate-200 px-3 py-2"
+              placeholder="Escriba el ID o el título del libro"
+              value={bookSearch}
+              onChange={(event) => handleBookSearchChange(event.target.value)}
+            />
+            {bookSearch.trim() && isBookResultsOpen ? (
+              <div className="absolute top-[calc(100%+4px)] z-20 max-h-56 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+                {filteredBooks.length > 0 ? (
+                  filteredBooks.map((book) => (
+                    <button
+                      key={book.id}
+                      type="button"
+                      className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+                      onClick={() => selectBook(book.id)}
+                    >
+                      <span className="font-medium text-slate-900">{book.title}</span>
+                      <span className="ml-2 text-slate-500">#{book.id}</span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-2 text-sm text-slate-500">No se encontraron libros</p>
+                )}
+              </div>
+            ) : null}
+          </label>
+
+          <button className="rounded-xl bg-slate-900 px-4 py-2 text-white" onClick={openBookModal}>
+            Nuevo libro
+          </button>
+        </div>
+      </section>
+
+      <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+        <section>
+          {isBooksLoading ? <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-600">Cargando libros...</p> : null}
+          {!isBooksLoading && booksError && !isUnauthenticatedBooksError ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-600">
+              <p>{booksError}</p>
+              <button className="mt-3 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700" onClick={() => void reloadBooks()}>
+                Reintentar
+              </button>
+            </div>
+          ) : null}
+          {!isBooksLoading && !booksError && books.length === 0 ? (
+            <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-600">Todavía no hay libros disponibles.</p>
+          ) : null}
+          {!isBooksLoading && !booksError && books.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {books.map((book) => (
+                <article key={book.id} className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <h2 className="font-semibold text-slate-900">{book.title}</h2>
+                  <p className="text-sm text-slate-500">{book.author}</p>
+                  <p className="mt-2 text-xs uppercase tracking-wide text-slate-400">{book.category}</p>
+                  <div className="mt-auto pt-3">
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold text-slate-900">{formatCurrency(book.price)}</p>
+                      <p className="text-sm text-slate-600">Existencia {book.stock}</p>
+                    </div>
+                    <button
+                      onClick={() => addBook(book.id)}
+                      disabled={book.stock === 0}
+                      className="mt-4 w-full rounded-xl bg-slate-900 px-3 py-2 text-white disabled:bg-slate-300"
+                    >
+                      Agregar al carrito
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : null}
+
+          {!isBooksLoading && !booksError && totalBooksPages > 1 ? (
+            <div className="mt-4 flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+              <p>
+                Página {booksPage} de {totalBooksPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="rounded-lg bg-slate-100 px-3 py-2 text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => setBooksPage((page) => Math.max(1, page - 1))}
+                  disabled={booksPage <= 1}
+                >
+                  Anterior
+                </button>
+                {booksPageNumbers.map((page) => (
+                  <button
+                    key={page}
+                    type="button"
+                    className={`h-9 min-w-9 rounded-lg px-3 text-sm ${
+                      booksPage === page ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'
+                    }`}
+                    onClick={() => setBooksPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="rounded-lg bg-slate-900 px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => setBooksPage((page) => Math.min(totalBooksPages, page + 1))}
+                  disabled={booksPage >= totalBooksPages}
+                >
+                  Siguiente
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          <button
+            onClick={() => void completeSale()}
+            disabled={isSubmitting || cart.length === 0 || !clientId}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-300 bg-white px-6 py-4 text-lg font-semibold text-slate-900 shadow-sm transition hover:bg-emerald-50 disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+          >
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-emerald-400">
+              <CircleCheck className="h-4 w-4 text-slate-700" />
+            </span>
+            {isSubmitting ? 'Procesando...' : 'Completar venta'}
+          </button>
+          {saleError ? <p className="mt-3 text-sm text-slate-600">{saleError}</p> : null}
+        </section>
+
+        <aside className="h-fit rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-700 shadow-sm lg:sticky lg:top-6">
+          <h3 className="text-lg font-semibold text-slate-900">Carrito</h3>
+          <div className="mt-3 max-h-[38vh] space-y-3 overflow-y-auto pr-1 sm:max-h-[50vh]">
+            {cart.length === 0 ? <p className="text-sm text-slate-500">No hay artículos seleccionados.</p> : null}
+            {cart.map((item) => (
+              <article key={item.book.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="flex items-start gap-2">
+                  <p className="line-clamp-2 min-w-0 flex-1 text-sm font-semibold leading-5 text-slate-900">{item.book.title}</p>
+                  <button
+                    type="button"
+                    aria-label="Eliminar artículo"
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-rose-200 bg-white text-slate-600 transition hover:bg-rose-50"
+                    onClick={() => requestRemoveItemConfirmation(item.book.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-2.5">
+                  <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                    Cant.
+                    <input
+                      type="number"
+                      min={1}
+                      max={item.book.stock}
+                      className="h-7 w-16 rounded-lg border border-slate-300 bg-slate-50 px-2 text-sm text-slate-800"
+                      value={item.quantity}
+                      onChange={(event) => updateQuantity(item.book.id, Number(event.target.value))}
+                    />
+                  </label>
+                  <p className="text-sm font-semibold text-slate-800">{formatCurrency(item.book.price * item.quantity)}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="mt-4 border-t border-slate-200 pt-3">
+            <div className="flex justify-between text-sm text-slate-600">
+              <span>Subtotal</span>
+              <span className="font-semibold text-slate-900">{formatCurrency(subtotal)}</span>
+            </div>
+            <div className="mt-1.5 flex justify-between text-base font-semibold text-slate-900">
+              <span>Total</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <ClientFormModal
+        title="Crear cliente"
+        isOpen={isClientModalOpen}
+        onClose={closeClientModal}
+        form={clientForm}
+        onFieldChange={updateClientForm}
+        onSubmit={submitClient}
+        submitError={clientSubmitError}
+        submitLabel="Crear"
+      />
+
+      <BookFormModal
+        title="Crear libro"
+        isOpen={isBookModalOpen}
+        onClose={closeBookModal}
+        form={{
+          title: bookTitle,
+          author: bookAuthor,
+          category: bookCategory,
+          price: bookPrice,
+          stock: bookStock,
+        }}
+        onTextChange={(field, value) => {
+          if (field === 'title') setBookTitle(value)
+          if (field === 'author') setBookAuthor(value)
+          if (field === 'category') setBookCategory(value)
+        }}
+        onNumberChange={(field, value) => {
+          if (field === 'price') setBookPrice(value)
+          if (field === 'stock') setBookStock(value)
+        }}
+        onSubmit={submitBook}
+        submitError={bookSubmitError}
+        submitLabel="Crear"
+      />
+
+      <MessageModal message={createSuccessMessage} isOpen={isCreateSuccessModalOpen} onClose={closeCreateSuccessModal} />
+
+      <Modal title="Confirmar eliminación" isOpen={removeItemTargetBookId !== null} onClose={cancelRemoveItemConfirmation}>
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">¿Está seguro de que desea eliminar este artículo del carrito?</p>
+          <div className="flex justify-end gap-2">
+            <button className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700" onClick={cancelRemoveItemConfirmation}>
+              Cancelar
+            </button>
+            <button className="rounded-lg bg-rose-600 px-3 py-2 text-sm text-white" onClick={confirmRemoveItem}>
+              Eliminar
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal title="Detalle de la venta" size="lg" isOpen={Boolean(lastSale)} onClose={closeSaleDetail}>
+        {lastSale ? (
+          <div>
+            {saleSuccessMessage ? <p className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{saleSuccessMessage}</p> : null}
+            <div className="mb-2 flex justify-end">
+              <button
+                type="button"
+                className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white"
+                onClick={exportLastSaleBill}
+              >
+                <FileDown className="h-4 w-4" />
+                Exportar PDF
+              </button>
+            </div>
+            <p className="text-sm text-slate-600">Venta #{lastSale.id}</p>
+            <p className="text-sm text-slate-600">Número de venta: {getSaleNumber(lastSale)}</p>
+            <p className="text-sm text-slate-600">Fecha: {formatDateTime(lastSale.sold_at)}</p>
+            <p className="text-sm text-slate-600">Cliente: {lastSale.client.name}</p>
+            <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left">Libro</th>
+                    <th className="px-3 py-2 text-left">Cant.</th>
+                    <th className="px-3 py-2 text-left">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lastSale.items.map((item) => (
+                    <tr key={item.id} className="border-t border-slate-200">
+                      <td className="px-3 py-2">{item.book.title}</td>
+                      <td className="px-3 py-2">{item.quantity}</td>
+                      <td className="px-3 py-2">{formatCurrency(item.line_total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-4 text-right text-lg font-semibold">Total general: {formatCurrency(lastSale.total)}</p>
+          </div>
+        ) : null}
+      </Modal>
+    </div>
+  )
+}

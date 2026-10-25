@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ClientPayload } from '@/types/client.ts'
+import type { ClientFormState } from '@/types/client.ts'
 import type { BookPayload } from '@/types/book.ts'
 import { exportSaleBillPdf } from '@/utils/pdf.ts'
 import { isValidDecimal, isValidInteger, validateBookTitle, validateLettersOnly, validateOptionalEmail, validateOptionalPhone } from '@/utils/validation.ts'
 import { useSalesPOS } from '@/hooks/sales/useSalesPOS.ts'
 
-const emptyClientForm: ClientPayload = {
+const emptyClientForm: ClientFormState = {
+  idNumber: '',
   name: '',
   email: '',
   phone: '',
@@ -24,7 +25,7 @@ export const useSalesPage = () => {
   const sales = useSalesPOS()
   const booksPageSize = 12
   const [isClientModalOpen, setIsClientModalOpen] = useState(false)
-  const [clientForm, setClientForm] = useState<ClientPayload>(emptyClientForm)
+  const [clientForm, setClientForm] = useState<ClientFormState>(emptyClientForm)
   const [clientSearch, setClientSearch] = useState('')
   const [isClientResultsOpen, setIsClientResultsOpen] = useState(false)
   const [clientSubmitError, setClientSubmitError] = useState('')
@@ -71,7 +72,7 @@ export const useSalesPage = () => {
     }
 
     return sales.clients.filter((client) => {
-      const searchableText = `${client.id} ${client.name}`.toLowerCase()
+      const searchableText = `${client.idClient} ${client.name}`.toLowerCase()
       return searchableText.includes(query)
     })
   }, [sales.clients, clientSearch])
@@ -101,11 +102,11 @@ export const useSalesPage = () => {
     setIsClientModalOpen(false)
   }
 
-  const updateClientForm = (field: keyof ClientPayload, value: string) => {
+  const updateClientForm = (field: keyof ClientFormState, value: string) => {
     setClientSubmitError('')
 
-    if (field === 'phone') {
-      setClientForm((current) => ({ ...current, phone: value.replace(/\D/g, '') }))
+    if (field === 'phone' || field === 'idNumber') {
+      setClientForm((current) => ({ ...current, [field]: value.replace(/\D/g, '') }))
       return
     }
 
@@ -162,24 +163,19 @@ export const useSalesPage = () => {
   const submitClient = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (!clientForm.email?.trim() && !clientForm.phone?.trim()) {
-      setClientSubmitError('Email or phone is required.')
-      return
-    }
-
     const nameError = validateLettersOnly('Client name', clientForm.name)
     if (nameError) {
       setClientSubmitError(nameError)
       return
     }
 
-    const emailError = validateOptionalEmail('Client email', clientForm.email ?? '')
+    const emailError = validateOptionalEmail('Client email', clientForm.email)
     if (emailError) {
       setClientSubmitError(emailError)
       return
     }
 
-    const phoneError = validateOptionalPhone('Client phone', clientForm.phone ?? '')
+    const phoneError = validateOptionalPhone('Client phone', clientForm.phone)
     if (phoneError) {
       setClientSubmitError(phoneError)
       return
@@ -187,12 +183,13 @@ export const useSalesPage = () => {
 
     try {
       const client = await sales.createClient({
+        idNumber: clientForm.idNumber.trim() ? Number(clientForm.idNumber) : null,
         name: clientForm.name.trim(),
-        email: clientForm.email?.trim() || null,
-        phone: clientForm.phone?.trim() || null,
+        email: clientForm.email.trim() || null,
+        phone: clientForm.phone.trim() ? Number(clientForm.phone) : null,
       })
-      sales.setClientId(client.id)
-      setClientSearch(`${client.id} - ${client.name}`)
+      sales.setClientId(client.idClient)
+      setClientSearch(`${client.idClient} - ${client.name}`)
       setIsClientResultsOpen(false)
       setClientForm(emptyClientForm)
       setClientSubmitError('')

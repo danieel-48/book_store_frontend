@@ -3,9 +3,9 @@ import type { AuthUser, LoginPayload } from '@/types/auth.ts'
 
 export type AuthContextValue = {
   user: AuthUser | null
-  isLoading: boolean
   login: (payload: LoginPayload) => Promise<void>
-  logout: () => Promise<void>
+  logout: () => void
+  updateSessionUser: (user: AuthUser) => void
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined)

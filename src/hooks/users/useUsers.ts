@@ -1,61 +1,49 @@
 import { useCallback, useEffect, useState } from 'react'
+import { authService } from '@/services/authService.ts'
 import { usersService } from '@/services/usersService.ts'
 import type { User, UserPayload } from '@/types/user.ts'
 
-type UseUsersOptions = {
-  enabled?: boolean
-}
+const upsert = (list: User[], user: User) =>
+  [...list.filter((item) => item.id !== user.id), user].sort((a, b) => a.id - b.id)
 
-/** useUsers: carga usuarios cuando está habilitado y refresca la lista tras cambios. HU-07. */
-export const useUsers = ({ enabled = true }: UseUsersOptions = {}) => {
+/** useUsers: carga la lista de usuarios (GET /api/users) y la mantiene al registrar, editar o buscar. */
+export const useUsers = () => {
   const [users, setUsers] = useState<User[]>([])
   const [error, setError] = useState('')
 
-  const loadUsers = useCallback(async () => {
-    if (!enabled) {
-      setUsers([])
-      setError('')
-      return
-    }
-
-    try {
-      const response = await usersService.list()
-      setUsers(response.data.data)
-      setError('')
-    } catch (exception) {
-      setUsers([])
-      setError(exception instanceof Error ? exception.message : 'No se pudieron cargar los usuarios.')
-    }
-  }, [enabled])
+  const reload = useCallback(
+    () =>
+      usersService
+        .list()
+        .then((list) => {
+          setUsers(list)
+          setError('')
+        })
+        .catch((exception) => {
+          setError(exception instanceof Error ? exception.message : 'No se pudieron cargar los usuarios.')
+        }),
+    [],
+  )
 
   useEffect(() => {
-    if (!enabled) {
-      setUsers([])
-      setError('')
-      return
-    }
+    void reload()
+  }, [reload])
 
-    const timer = window.setTimeout(() => {
-      void loadUsers()
-    }, 0)
+  const createUser = useCallback(async (payload: UserPayload) => {
+    const created = await authService.register(payload)
+    setUsers((current) => upsert(current, created))
+  }, [])
 
-    return () => window.clearTimeout(timer)
-  }, [enabled, loadUsers])
+  const findByEmail = useCallback(async (email: string) => {
+    const found = await usersService.profile(email)
+    setUsers((current) => upsert(current, found))
+  }, [])
 
-  const createUser = async (payload: UserPayload) => {
-    await usersService.create(payload)
-    await loadUsers()
-  }
+  const updateUser = useCallback(async (id: number, payload: Partial<UserPayload>) => {
+    const updated = await usersService.update(id, payload)
+    setUsers((current) => upsert(current, updated))
+    return updated
+  }, [])
 
-  const updateUser = async (id: number, payload: UserPayload) => {
-    await usersService.update(id, payload)
-    await loadUsers()
-  }
-
-  const removeUser = async (id: number) => {
-    await usersService.remove(id)
-    await loadUsers()
-  }
-
-  return { users, error, createUser, updateUser, removeUser, reload: loadUsers }
+  return { users, error, createUser, findByEmail, updateUser, reload }
 }

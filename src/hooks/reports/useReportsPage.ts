@@ -20,10 +20,10 @@ const periodLabels = {
 export const useReportsPage = () => {
   const pageSize = 10
   const { user } = useAuth()
-  const { filters, setFilters, result, isLoading, error } = useReports()
   const { clients, error: clientsError } = useClients()
   const { books, error: booksError } = useBooks()
-  const { users, error: usersError } = useUsers({ enabled: user?.role === 'ADMIN' })
+  const { users, error: usersError } = useUsers()
+  const { filters, setFilters, result, isLoading, error } = useReports(books, clients, users)
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
 
@@ -52,7 +52,7 @@ export const useReportsPage = () => {
   }, [currentPage, totalPages])
 
   const totalAmount = useMemo(
-    () => result.summary.reduce((sum, row) => sum + Number(row.total_amount), 0),
+    () => result.summary.reduce((sum, row) => sum + Number(row.totalAmount), 0),
     [result.summary],
   )
 
@@ -64,7 +64,7 @@ export const useReportsPage = () => {
 
     result.summary.forEach((row, index) => {
       doc.text(
-        `${row.period} | Ventas: ${row.sales_count} | Total: ${formatCurrency(Number(row.total_amount))}`,
+        `${row.period} | Ventas: ${row.salesCount} | Total: ${formatCurrency(Number(row.totalAmount))}`,
         10,
         35 + index * 8,
       )
@@ -92,11 +92,11 @@ export const useReportsPage = () => {
     error,
     clientsError,
     booksError,
-    usersError,
     currentUser: user,
     clients,
     books,
     users,
+    usersError,
     selectedSale,
     setSelectedSale,
     totalAmount,

@@ -5,6 +5,7 @@ export type AuthUser = {
   name: string
   email: string
   role: Role
+  active: boolean
 }
 
 export type LoginPayload = {
@@ -12,7 +13,9 @@ export type LoginPayload = {
   password: string
 }
 
-export type LoginData = {
-  token: string
-  user: AuthUser
+export type RegisterPayload = {
+  name: string
+  email: string
+  password: string
+  role: Role
 }

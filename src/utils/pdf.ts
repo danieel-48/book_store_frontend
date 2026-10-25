@@ -26,18 +26,18 @@ export const exportSaleBillPdf = (sale: Sale) => {
   doc.roundedRect(left, 42, 86, 34, 3, 3)
   doc.text('FACTURAR A', left + 4, 49)
   doc.setFontSize(12)
-  doc.text(sale.client.name, left + 4, 57)
+  doc.text(sale.client?.name ?? `Cliente #${sale.idClient}`, left + 4, 57)
   doc.setFontSize(10)
-  doc.text(`ID del cliente: ${sale.client.id}`, left + 4, 64)
-  if (sale.client.email) {
+  doc.text(`ID del cliente: ${sale.idClient}`, left + 4, 64)
+  if (sale.client?.email) {
     doc.text(`Correo: ${sale.client.email}`, left + 4, 71)
   }
 
   doc.roundedRect(right - 72, 42, 72, 46, 3, 3)
   doc.text('DETALLES', right - 68, 49)
   doc.text(`Venta No: ${saleNumber}`, right - 68, 57)
-  doc.text(`Fecha: ${formatDateTime(sale.sold_at)}`, right - 68, 71)
-  doc.text(`Vendedor: ${sale.user.name}`, right - 68, 78)
+  doc.text(`Fecha: ${formatDateTime(sale.date)}`, right - 68, 71)
+  doc.text(`Vendedor: ${sale.user?.name ?? 'N/D'}`, right - 68, 78)
 
   let y = 100
   doc.setFillColor(241, 245, 249)
@@ -50,13 +50,13 @@ export const exportSaleBillPdf = (sale: Sale) => {
   y += 14
 
   sale.items.forEach((item) => {
-    const titleLines = doc.splitTextToSize(item.book.title, 96)
+    const titleLines = doc.splitTextToSize(item.bookTitle, 96)
     const rowHeight = Math.max(10, titleLines.length * 5 + 3)
 
     doc.text(titleLines, left + 3, y)
     doc.text(String(item.quantity), left + 111, y)
-    doc.text(formatCurrency(item.unit_price), left + 128, y)
-    doc.text(formatCurrency(item.line_total), left + 165, y)
+    doc.text(    formatCurrency(item.unitPrice), left + 128, y)
+        doc.text(formatCurrency(item.total), left + 165, y)
     doc.line(left, y + rowHeight - 4, right, y + rowHeight - 4)
 
     y += rowHeight

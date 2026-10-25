@@ -1,11 +1,16 @@
 import { useMemo, useState } from 'react'
+import { useAuth } from '@/app/useAuth'
 import { useBooks } from '@/hooks/books/useBooks.ts'
 import { useClients } from '@/hooks/clients/useClients.ts'
+import { booksService } from '@/services/booksService.ts'
 import { salesService } from '@/services/salesService.ts'
 import type { CartItem, Sale } from '@/types/sale.ts'
+import { toLocalDateTime } from '@/utils/format.ts'
+import { buildSale } from '@/utils/sale.ts'
 
-/** useSalesPOS: administra el carrito, valida existencias y registra ventas. HU-05. */
+/** useSalesPOS: administra el carrito, valida existencias y registra ventas. */
 export const useSalesPOS = () => {
+  const { user } = useAuth()
   const { books, isLoading: isBooksLoading, error: booksError, createBook, reload: reloadBooks } = useBooks()
   const { clients, createClient, reload } = useClients()
   const [cart, setCart] = useState<CartItem[]>([])
@@ -63,12 +68,30 @@ export const useSalesPOS = () => {
     setIsSubmitting(true)
 
     try {
-      const response = await salesService.create({
-        client_id: clientId,
-        items: cart.map((item) => ({ book_id: item.book.id, quantity: item.quantity })),
+      // Se consulta el stock actual para no crear una venta que luego falle a mitad.
+      const freshBooks = await booksService.list()
+      const insufficient = cart.find((item) => {
+        const current = freshBooks.find((book) => book.id === item.book.id)
+        return !current || item.quantity > current.stock
       })
 
-      setLastSale(response.data)
+      if (insufficient) {
+        const current = freshBooks.find((book) => book.id === insufficient.book.id)
+        setSaleError(
+          current
+            ? `Stock insuficiente de «${current.title}»: solicitó ${insufficient.quantity} y solo hay ${current.stock} disponibles.`
+            : `El libro «${insufficient.book.title}» ya no está disponible.`,
+        )
+        await reloadBooks()
+        return false
+      }
+
+      const { sale, details } = await salesService.create(
+        { idClient: clientId, idUser: user?.id, date: toLocalDateTime() },
+        cart.map((item) => ({ idBook: item.book.id, quantity: item.quantity })),
+      )
+
+      setLastSale(buildSale(sale, details, freshBooks, clients, user ? [user] : []))
       setCart([])
       await reload()
       await reloadBooks()

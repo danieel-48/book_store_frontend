@@ -5,11 +5,24 @@ export const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value)
 
-export const formatDateTime = (value: string) =>
-  new Intl.DateTimeFormat('es-CO', {
+export const formatDateTime = (value: string | null) => {
+  if (!value) {
+    return 'Sin fecha'
+  }
+
+  return new Intl.DateTimeFormat('es-CO', {
     year: 'numeric',
     month: 'short',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value))
+}
+
+const pad = (value: number) => String(value).padStart(2, '0')
+
+// La API maneja fechas locales sin zona horaria (YYYY-MM-DDTHH:mm:ss).
+export const toLocalDateTime = (date: Date = new Date()) =>
+  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+
+export const toLocalDate = (date: Date = new Date()) => toLocalDateTime(date).slice(0, 10)

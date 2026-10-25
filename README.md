@@ -17,15 +17,15 @@ Aplicación web para administrar libros, clientes, ventas, usuarios y reportes d
 Configura `VITE_API_URL` en `.env` con la URL base del servidor, por ejemplo `http://localhost:8080`. Los servicios agregan sus rutas `/api/...`; los componentes no conocen la URL base.
 
 | Historia de usuario           | Componente(s) | Archivo | Endpoint de la API (AA3) |
+| --- | --- | --- | --- |
+| HU-01 Registro (crear cuenta) | `UsersPage` · `useUsersPage` | `pages/UsersPage.tsx` | `POST /api/auth/register` (consulta: `GET /api/users/profile?email=`) |
+| HU-02 Inicio de sesión        | `LoginPage` · `useLoginForm` · `ProtectedRoute` | `pages/LoginPage.tsx` | `POST /api/auth/login` (sin JWT; la sesión guarda el usuario devuelto) |
+| HU-03 Perfil de usuario       | `UsersPage` · `useUsersPage` · `AuthContext` | `pages/UsersPage.tsx` | `GET /api/users/profile?email=` · `PUT /api/users/{id}` |
+| HU-04 Buscar libros           | `BooksPage` (campo de búsqueda) | `pages/BooksPage.tsx` | `GET /api/books` (búsqueda por ID/título en el cliente) |
+| HU-05 Filtrar libros          | `BooksPage` · `ReportsPage` (filtros por libro, cliente, usuario y periodo) | `pages/BooksPage.tsx` | `GET /api/books` · `GET /api/sales?idClient=&idUser=` · `GET /api/sale-details` |
+| HU-06 Ver detalle del libro   | `BookFormModal` | `components/books/BookFormModal.tsx` | `GET /api/books` (alta: `POST /api/books`, edición: `PUT /api/books/{id}`; no hay eliminación) |
+| HU-07 Agregar al carrito      | `SalesPage` · `useSalesPOS` | `pages/SalesPage.tsx` | `GET /api/books` (el carrito se maneja en el estado del cliente) |
+| HU-08 Comprar libros          | `SalesPage` · `useSalesPage` | `pages/SalesPage.tsx` | `POST /api/sales` + `POST /api/sale-details` |
+| HU-9 Ver historial de compras | `ReportsPage` · `SalesPage` (detalle) | `pages/ReportsPage.tsx` | `GET /api/sales` · `GET /api/sale-details` |
 
-| HU-01 Registro (crear cuenta) | `UsersPage` · `useUsersPage` | `pages/UsersPage.tsx` | `POST /users` |
-| HU-02 Inicio de sesión        | `LoginPage` · `useLoginForm` · `ProtectedRoute` | `pages/LoginPage.tsx` | `POST /auth/login` (cierre de sesión: `POST /auth/logout`) |
-| HU-03 Perfil de usuario       | `AuthContext` · `SidebarLayout` | `app/AuthContext.tsx` | `GET /auth/me` |
-| HU-04 Buscar libros           | `BooksPage` (campo de búsqueda) | `pages/BooksPage.tsx` | `GET /books` (búsqueda por ID/título en el cliente) |
-| HU-05 Filtrar libros          | `BooksPage` · `ReportsPage` (filtros por libro, cliente, usuario y periodo) | `pages/BooksPage.tsx` | `GET /books` · `GET /reports/sales?period=&book_id=&client_id=&user_id=&date=` |
-| HU-06 Ver detalle del libro   | `BookFormModal` | `components/books/BookFormModal.tsx` | `GET /books` (alta: `POST /books`, edición: `PUT /books/{id}`, baja: `DELETE /books/{id}`) |
-| HU-07 Agregar al carrito      | `SalesPage` · `useSalesPOS` | `pages/SalesPage.tsx` | `GET /books` (el carrito se maneja en el estado del cliente) |
-| HU-08 Comprar libros          | `SalesPage` · `useSalesPage` | `pages/SalesPage.tsx` | `POST /sales` |
-| HU-9 Ver historial de compras | `ReportsPage` · `SalesPage` (detalle) | `pages/ReportsPage.tsx` | `GET /reports/sales` · `GET /sales/{id}` |
-
-> Nota: la aplicación es un panel administrativo/POS de libreria (rol `ADMIN`/`EMPLOYEE`). Las historias de comprador se implementan desde el punto de vista del personal que opera la venta. HU-03 no forma parte de la lista indicada.
+> Nota: la aplicación es un panel administrativo/POS de libreria (rol `ADMIN`/`EMPLOYEE`). Las historias de comprador se implementan desde el punto de vista del personal que opera la venta.

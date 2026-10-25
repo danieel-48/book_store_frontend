@@ -1,7 +1,7 @@
 import { apiRequest } from '@/services/api.ts'
 import type { Client, ClientPayload } from '@/types/client.ts'
 
-/** clientsService: agrupa las solicitudes GET, POST, PUT y DELETE del recurso /clients. HU-04. */
+/** clientsService: agrupa las solicitudes GET, POST y PUT del recurso /api/clients. */
 export const clientsService = {
   list: () => apiRequest<Client[]>('/api/clients'),
   create: (payload: ClientPayload) =>
@@ -13,9 +13,5 @@ export const clientsService = {
     apiRequest<Client>(`/api/clients/${id}`, {
       method: 'PUT',
       body: JSON.stringify(payload),
-    }),
-  remove: (id: number) =>
-    apiRequest<null>(`/api/clients/${id}`, {
-      method: 'DELETE',
     }),
 }

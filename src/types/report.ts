@@ -1,9 +1,9 @@
-import type { Sale } from '@/types/sale.ts'
+import type { Sale, SaleDetail, SaleRecord } from '@/types/sale.ts'
 
 export type ReportSummary = {
   period: string
-  sales_count: number
-  total_amount: number
+  salesCount: number
+  totalAmount: number
 }
 
 export type ReportResult = {
@@ -11,10 +11,15 @@ export type ReportResult = {
   sales: Sale[]
 }
 
+export type ReportData = {
+  sales: SaleRecord[]
+  details: SaleDetail[]
+}
+
 export type ReportFilters = {
   period: 'daily' | 'monthly' | 'yearly'
-  client_id?: string
-  book_id?: string
-  user_id?: string
+  idClient?: string
+  idBook?: string
+  idUser?: string
   date?: string
 }

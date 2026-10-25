@@ -2,23 +2,26 @@ import { booksService } from '@/services/booksService.ts'
 import { clientsService } from '@/services/clientsService.ts'
 import { reportsService } from '@/services/reportsService.ts'
 import type { DashboardStats } from '@/types/dashboard.ts'
+import { toLocalDate } from '@/utils/format.ts'
+import { buildReport } from '@/utils/report.ts'
 
-/** dashboardService: combina libros, clientes y ventas diarias para calcular las métricas del panel. HU-02. */
+/** dashboardService: combina libros, clientes y ventas del día para calcular las métricas del panel. */
 export const dashboardService = {
   async getStats(): Promise<DashboardStats> {
-    const [books, clients, report] = await Promise.all([
+    const filters = { period: 'daily', date: toLocalDate() } as const
+    const [books, clients, data] = await Promise.all([
       booksService.list(),
       clientsService.list(),
-      reportsService.sales({ period: 'daily', date: new Date().toISOString().split('T')[0] }),
+      reportsService.sales(filters),
     ])
 
-    const today = report.data.summary[0]
+    const today = buildReport(data, books, clients, filters).summary[0]
 
     return {
-      totalBooks: books.data.length,
-      totalClients: clients.data.length,
-      salesToday: Number(today?.total_amount ?? 0),
-      transactionsToday: Number(today?.sales_count ?? 0),
+      totalBooks: books.length,
+      totalClients: clients.length,
+      salesToday: Number(today?.totalAmount ?? 0),
+      transactionsToday: Number(today?.salesCount ?? 0),
     }
   },
 }

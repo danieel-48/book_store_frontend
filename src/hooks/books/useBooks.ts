@@ -11,8 +11,7 @@ export const useBooks = () => {
   const loadBooks = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await booksService.list()
-      setBooks(response.data)
+      setBooks(await booksService.list())
       setError('')
     } catch (exception) {
       setBooks([])
@@ -40,10 +39,5 @@ export const useBooks = () => {
     await loadBooks()
   }
 
-  const removeBook = async (id: number) => {
-    await booksService.remove(id)
-    await loadBooks()
-  }
-
-  return { books, isLoading, error, createBook, updateBook, removeBook, reload: loadBooks }
+  return { books, isLoading, error, createBook, updateBook, reload: loadBooks }
 }

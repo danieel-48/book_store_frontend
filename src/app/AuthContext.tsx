@@ -1,18 +1,27 @@
-/** AuthProvider: restaura y mantiene la sesión autenticada y su expiración por inactividad. Historia: HU-01. Props: children, contenido de la aplicación. */
+/** AuthProvider: mantiene la sesión del usuario (guardada localmente) y su expiración por inactividad. Props: children, contenido de la aplicación. */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { authService } from '@/services/authService.ts'
 import type { AuthUser, LoginPayload } from '@/types/auth.ts'
-import { clearStoredToken, getStoredToken, persistToken, setUnauthorizedHandler } from '@/services/api.ts'
 import { AuthContext } from '@/app/auth-context'
 
+const SESSION_KEY = 'bookstore_user'
+const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000
+
+const readStoredUser = (): AuthUser | null => {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY)
+    return raw ? (JSON.parse(raw) as AuthUser) : null
+  } catch {
+    return null
+  }
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [isLoading, setIsLoading] = useState(Boolean(getStoredToken()))
+  const [user, setUser] = useState<AuthUser | null>(readStoredUser)
   const inactivityTimeoutRef = useRef<number | null>(null)
 
   const clearSession = useCallback(() => {
-    clearStoredToken()
+    localStorage.removeItem(SESSION_KEY)
     setUser(null)
 
     if (window.location.pathname !== '/login') {
@@ -20,31 +29,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [])
 
-  useEffect(() => {
-    setUnauthorizedHandler(clearSession)
-
-    if (!getStoredToken()) return
-
-    authService
-      .me()
-      .then((response) => setUser(response.data))
-      .catch(() => clearSession())
-      .finally(() => setIsLoading(false))
-  }, [clearSession])
-
-  const login = useCallback(async (payload: LoginPayload) => {
-    const response = await authService.login(payload)
-    persistToken(response.data.token)
-    setUser(response.data.user)
+  const updateSessionUser = useCallback((nextUser: AuthUser) => {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(nextUser))
+    setUser(nextUser)
   }, [])
 
-  const logout = useCallback(async () => {
-    try {
-      await authService.logout()
-    } finally {
-      clearSession()
-    }
-  }, [clearSession])
+  const login = useCallback(
+    async (payload: LoginPayload) => {
+      updateSessionUser(await authService.login(payload))
+    },
+    [updateSessionUser],
+  )
+
+  const logout = clearSession
 
   useEffect(() => {
     if (!user) {
@@ -95,11 +92,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const value = useMemo(
     () => ({
       user,
-      isLoading,
       login,
       logout,
+      updateSessionUser,
     }),
-    [isLoading, login, logout, user],
+    [login, logout, updateSessionUser, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -21,11 +21,11 @@ export const ReportsPage = () => {
     error,
     clientsError,
     booksError,
-    usersError,
     currentUser,
     clients,
     books,
     users,
+    usersError,
     selectedSale,
     setSelectedSale,
     totalAmount,
@@ -79,12 +79,12 @@ export const ReportsPage = () => {
           Cliente
           <select
             className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
-            value={filters.client_id ?? ''}
-            onChange={(event) => setFilters((current) => ({ ...current, client_id: event.target.value }))}
+            value={filters.idClient ?? ''}
+            onChange={(event) => setFilters((current) => ({ ...current, idClient: event.target.value }))}
           >
             <option value="">Todos los clientes</option>
             {clients.map((client) => (
-              <option key={client.id} value={client.id}>
+              <option key={client.idClient} value={client.idClient}>
                 {client.name}
               </option>
             ))}
@@ -95,8 +95,8 @@ export const ReportsPage = () => {
           Libro
           <select
             className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
-            value={filters.book_id ?? ''}
-            onChange={(event) => setFilters((current) => ({ ...current, book_id: event.target.value }))}
+            value={filters.idBook ?? ''}
+            onChange={(event) => setFilters((current) => ({ ...current, idBook: event.target.value }))}
           >
             <option value="">Todos los libros</option>
             {books.map((book) => (
@@ -112,13 +112,13 @@ export const ReportsPage = () => {
             Usuario
             <select
               className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
-              value={filters.user_id ?? ''}
-              onChange={(event) => setFilters((current) => ({ ...current, user_id: event.target.value }))}
+              value={filters.idUser ?? ''}
+              onChange={(event) => setFilters((current) => ({ ...current, idUser: event.target.value }))}
             >
               <option value="">Todos los usuarios</option>
               {users.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.name}
+                  {item.name} ({item.email})
                 </option>
               ))}
             </select>
@@ -160,22 +160,22 @@ export const ReportsPage = () => {
 
           <div className="divide-y divide-slate-200">
             {paginatedSales.map((sale) => (
-              <article key={sale.id} className="grid gap-4 px-4 py-4 md:grid-cols-[100px_1.3fr_1fr_120px_180px] md:items-start md:gap-3">
+              <article key={sale.idSale} className="grid gap-4 px-4 py-4 md:grid-cols-[100px_1.3fr_1fr_120px_180px] md:items-start md:gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-400 md:hidden">Venta</p>
-                  <p className="font-semibold text-slate-900">#{sale.id}</p>
+                  <p className="font-semibold text-slate-900">                  #{sale.idSale}</p>
                 </div>
 
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-400 md:hidden">Fecha</p>
-                  <p className="text-sm text-slate-700">{formatDateTime(sale.sold_at)}</p>
-                  <p className="text-xs text-slate-500">Usuario: {sale.user.name}</p>
+                                    <p className="text-sm text-slate-700">{formatDateTime(sale.date)}</p>
+                                    <p className="text-xs text-slate-500">Usuario: {sale.user?.name ?? sale.idUser ?? 'N/D'}</p>
                 </div>
 
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-400 md:hidden">Cliente</p>
-                  <p className="text-sm font-medium text-slate-900">{sale.client.name}</p>
-                  <p className="text-xs text-slate-500">{sale.client.email || 'Sin correo'}</p>
+                                    <p className="text-sm font-medium text-slate-900">{sale.client?.name ?? `Cliente #${sale.idClient}`}</p>
+                                    <p className="text-xs text-slate-500">{sale.client?.email || 'Sin correo'}</p>
                 </div>
 
                 <div>
@@ -264,8 +264,8 @@ export const ReportsPage = () => {
           {result.summary.map((row) => (
             <div key={row.period} className="rounded-xl bg-slate-50 p-3">
               <p className="font-medium text-slate-900">{row.period}</p>
-              <p className="mt-1 text-sm text-slate-600">Ventas: {row.sales_count}</p>
-              <p className="text-sm text-slate-600">Total: {formatCurrency(Number(row.total_amount))}</p>
+              <p className="mt-1 text-sm text-slate-600">              Ventas: {row.salesCount}</p>
+                            <p className="text-sm text-slate-600">Total: {formatCurrency(Number(row.totalAmount))}</p>
             </div>
           ))}
         </div>
@@ -274,9 +274,9 @@ export const ReportsPage = () => {
       <Modal title="Detalle de la venta" size="lg" isOpen={Boolean(selectedSale)} onClose={() => setSelectedSale(null)}>
         {selectedSale ? (
           <div>
-            <p className="text-sm text-slate-600">Venta #{selectedSale.id}</p>
+            <p className="text-sm text-slate-600">Venta #{selectedSale.idSale}</p>
             <p className="text-sm text-slate-600">Número de venta: {getSaleNumber(selectedSale)}</p>
-            <p className="text-sm text-slate-600">Fecha: {formatDateTime(selectedSale.sold_at)}</p>
+            <p className="text-sm text-slate-600">Fecha: {formatDateTime(selectedSale.date)}</p>
             <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50">
@@ -288,10 +288,10 @@ export const ReportsPage = () => {
                 </thead>
                 <tbody>
                   {selectedSale.items.map((item) => (
-                    <tr key={item.id} className="border-t border-slate-200">
-                      <td className="px-3 py-2">{item.book.title}</td>
+                    <tr key={item.idDetail} className="border-t border-slate-200">
+                                          <td className="px-3 py-2">{item.bookTitle}</td>
                       <td className="px-3 py-2">{item.quantity}</td>
-                      <td className="px-3 py-2">{formatCurrency(item.line_total)}</td>
+                                          <td className="px-3 py-2">{formatCurrency(item.total)}</td>
                     </tr>
                   ))}
                 </tbody>

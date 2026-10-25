@@ -1,36 +1,30 @@
-export type ApiResponse<T> = {
-  success: boolean
-  message: string
-  data: T
+export class ApiError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
+
+type ErrorBody = {
+  message?: string
+  error?: string
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '')
-const TOKEN_KEY = 'bookstore_token'
 
-let unauthorizedHandler: (() => void) | null = null
-
-export const setUnauthorizedHandler = (handler: () => void) => {
-  unauthorizedHandler = handler
-}
-
-export const getStoredToken = () => localStorage.getItem(TOKEN_KEY)
-
-export const persistToken = (token: string) => localStorage.setItem(TOKEN_KEY, token)
-
-export const clearStoredToken = () => localStorage.removeItem(TOKEN_KEY)
-
-export const apiRequest = async <T>(path: string, options: RequestInit = {}): Promise<ApiResponse<T>> => {
+export const apiRequest = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
   if (!API_BASE_URL) {
     throw new Error('Falta configurar VITE_API_URL en el entorno.')
   }
 
-  const token = getStoredToken()
   const headers = new Headers(options.headers)
-  headers.set('Content-Type', 'application/json')
   headers.set('Accept', 'application/json')
 
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
+  if (options.body) {
+    headers.set('Content-Type', 'application/json')
   }
 
   let response: Response
@@ -45,23 +39,20 @@ export const apiRequest = async <T>(path: string, options: RequestInit = {}): Pr
       error instanceof Error && error.message
         ? `No se pudo conectar con el servidor API en ${API_BASE_URL}. ${error.message}`
         : `No se pudo conectar con el servidor API en ${API_BASE_URL}.`,
+      { cause: error },
     )
   }
 
-  if (response.status === 401 && unauthorizedHandler) {
-    unauthorizedHandler()
-  }
-
   const rawBody = await response.text()
-  let payload: ApiResponse<T> | null = null
+  let payload: unknown = null
 
   if (rawBody) {
     try {
-      payload = JSON.parse(rawBody) as ApiResponse<T>
+      payload = JSON.parse(rawBody)
     } catch {
       if (!response.ok) {
         const contentType = response.headers.get('content-type') ?? 'unknown content type'
-        throw new Error(`La solicitud falló (${response.status}): se esperaba JSON pero se recibió ${contentType}.`)
+        throw new ApiError(`La solicitud falló (${response.status}): se esperaba JSON pero se recibió ${contentType}.`, response.status)
       }
 
       throw new Error('Respuesta JSON no válida del servidor.')
@@ -69,12 +60,36 @@ export const apiRequest = async <T>(path: string, options: RequestInit = {}): Pr
   }
 
   if (!response.ok) {
-    throw new Error(payload?.message || `La solicitud falló (${response.status})`)
+    const body = (payload ?? {}) as ErrorBody
+    const friendly = getFriendlyMessage(response.status, path, options.method)
+    throw new ApiError(friendly || body.message || body.error || `La solicitud falló (${response.status})`, response.status)
   }
 
-  if (!payload) {
-    throw new Error('El servidor devolvió una respuesta vacía.')
-  }
+  return payload as T
+}
 
-  return payload
+// Mensajes en español para 404 y 409 según el recurso consultado.
+const notFoundMessages: [string, string][] = [
+  ['/api/sale-details', 'No se encontró el detalle de venta o el libro/venta indicado.'],
+  ['/api/sales', 'No se encontró la venta, el cliente o el usuario indicado.'],
+  ['/api/books', 'No se encontró el libro solicitado.'],
+  ['/api/clients', 'No se encontró el cliente solicitado.'],
+  ['/api/users', 'No se encontró un usuario con esos datos.'],
+]
+
+const conflictMessages: [string, string][] = [
+  ['/api/sale-details', 'No hay stock suficiente para completar la venta de ese libro.'],
+  ['/api/clients', 'Ya existe un cliente con ese número de identificación o correo electrónico.'],
+  ['/api/auth/register', 'Ya existe un usuario registrado con ese correo electrónico.'],
+  ['/api/users', 'Ya existe un usuario registrado con ese correo electrónico.'],
+]
+
+const getFriendlyMessage = (status: number, path: string, method = 'GET') => {
+  const table = status === 404 ? notFoundMessages : status === 409 ? conflictMessages : null
+  const match = table?.find(([prefix]) => path.startsWith(prefix))
+
+  if (match) return match[1]
+  if (status === 404) return 'El recurso solicitado no existe.'
+  if (status === 409) return `Conflicto: la operación (${method}) choca con datos existentes.`
+  return ''
 }

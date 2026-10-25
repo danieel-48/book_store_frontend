@@ -1,25 +1,13 @@
 import { apiRequest } from '@/services/api.ts'
 import type { User, UserPayload } from '@/types/user.ts'
 
-type PaginatedUsers = {
-  data: User[]
-}
-
-/** usersService: centraliza las solicitudes GET, POST, PUT y DELETE del recurso /users. HU-07. */
+/** usersService: consulta de perfil por correo (la API no expone listado ni eliminación de usuarios). */
 export const usersService = {
-  list: () => apiRequest<PaginatedUsers>('/api/users'),
-  create: (payload: UserPayload) =>
-    apiRequest<User>('/api/users', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
-  update: (id: number, payload: UserPayload) =>
+  list: () => apiRequest<User[]>('/api/users'),
+  profile: (email: string) => apiRequest<User>(`/api/users/profile?email=${email}`),
+  update: (id: number, payload: Partial<UserPayload>) =>
     apiRequest<User>(`/api/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(payload),
-    }),
-  remove: (id: number) =>
-    apiRequest<null>(`/api/users/${id}`, {
-      method: 'DELETE',
     }),
 }

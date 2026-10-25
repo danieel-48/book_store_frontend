@@ -9,8 +9,7 @@ export const useClients = () => {
 
   const loadClients = useCallback(async () => {
     try {
-      const response = await clientsService.list()
-      setClients(response.data)
+      setClients(await clientsService.list())
       setError('')
     } catch (exception) {
       setClients([])
@@ -27,9 +26,9 @@ export const useClients = () => {
   }, [loadClients])
 
   const createClient = async (payload: ClientPayload) => {
-    const response = await clientsService.create(payload)
+    const client = await clientsService.create(payload)
     await loadClients()
-    return response.data
+    return client
   }
 
   const updateClient = async (id: number, payload: ClientPayload) => {
@@ -37,10 +36,5 @@ export const useClients = () => {
     await loadClients()
   }
 
-  const removeClient = async (id: number) => {
-    await clientsService.remove(id)
-    await loadClients()
-  }
-
-  return { clients, error, createClient, updateClient, removeClient, reload: loadClients }
+  return { clients, error, createClient, updateClient, reload: loadClients }
 }

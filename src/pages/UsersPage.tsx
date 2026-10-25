@@ -1,5 +1,5 @@
-/** UsersPage: permite al administrador crear, editar y eliminar usuarios. Historia: HU-07. Props: ninguna; delega estado y operaciones a useUsersPage. */
-import { Trash2 } from 'lucide-react'
+/** UsersPage: permite al administrador registrar usuarios y consultarlos por correo, y a los usuarios consultar y editar su información de perfil. */
+import { UserCheck } from 'lucide-react'
 import { Modal } from '@/components/Modal.tsx'
 import { SectionHeader } from '@/components/SectionHeader.tsx'
 import { useUsersPage } from '@/hooks/users/useUsersPage.ts'
@@ -8,71 +8,165 @@ export const UsersPage = () => {
   const {
     currentUser,
     users,
+    usersError,
     isModalOpen,
-    deleteTargetUserId,
+    editingUserId,
     form,
     submitError,
+    searchEmail,
+    setSearchEmail,
+    searchError,
+    search,
     openModal,
+    openEditModal,
     closeModal,
     updateForm,
     submit,
-    requestDeleteConfirmation,
-    cancelDeleteConfirmation,
-    confirmDelete,
-  } =
-    useUsersPage()
+    loggedUserProfile,
+    isLoadingProfile,
+    profileError,
+    loadLoggedUserProfile,
+    closeProfileView,
+  } = useUsersPage()
 
-  if (currentUser?.role !== 'ADMIN') {
-    return <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-600">Solo los usuarios ADMIN pueden administrar usuarios del sistema.</p>
-  }
+  const isAdmin = currentUser?.role === 'ADMIN'
 
   return (
     <div>
       <SectionHeader
         title="Usuarios"
-        description="Administre el acceso del personal y sus roles."
+        description={
+          isAdmin
+            ? 'Registre personal, consulte usuarios por correo y gestione su información.'
+            : 'Consulte y gestione la información de su usuario.'
+        }
         actions={
-          <button className="rounded-xl bg-slate-900 px-4 py-2 text-white" onClick={openModal}>
-            Nuevo usuario
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              onClick={() => void loadLoggedUserProfile()}
+              disabled={isLoadingProfile}
+            >
+              <UserCheck className="h-4 w-4 text-slate-500" />
+              {isLoadingProfile ? 'Consultando perfil...' : 'Ver información del usuario logeado'}
+            </button>
+            {isAdmin ? (
+              <button
+                type="button"
+                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+                onClick={openModal}
+              >
+                Nuevo usuario
+              </button>
+            ) : null}
+          </div>
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {users.map((item) => (
-          <article key={item.id} className="rounded-2xl border border-slate-200 p-4 shadow-sm">
-            <h2 className="font-semibold text-slate-900">{item.name}</h2>
-            <p className="text-sm text-slate-500">{item.email}</p>
-            <p className="mt-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs">
-              {item.role === 'ADMIN' ? 'Administrador' : 'Empleado'}
-            </p>
-            <button
-              type="button"
-              aria-label="Eliminar usuario"
-              className="mt-4 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-rose-200 bg-white text-slate-600 transition hover:bg-rose-50"
-              onClick={() => requestDeleteConfirmation(item.id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </article>
-        ))}
-      </div>
-
-      <Modal title="Confirmar eliminación" isOpen={deleteTargetUserId !== null} onClose={cancelDeleteConfirmation}>
-        <div className="space-y-4">
-          <p className="text-sm text-slate-600">¿Está seguro de que desea eliminar este usuario?</p>
-          <div className="flex justify-end gap-2">
-            <button className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700" onClick={cancelDeleteConfirmation}>
-              Cancelar
-            </button>
-            <button className="rounded-lg bg-rose-600 px-3 py-2 text-sm text-white" onClick={() => void confirmDelete()}>
-              Eliminar
-            </button>
-          </div>
+      {profileError ? (
+        <div className="mb-5 flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <span>{profileError}</span>
+          <button
+            type="button"
+            onClick={() => void loadLoggedUserProfile()}
+            className="font-semibold underline hover:text-rose-800"
+          >
+            Reintentar
+          </button>
         </div>
-      </Modal>
+      ) : null}
 
-      <Modal title="Crear usuario" isOpen={isModalOpen} onClose={closeModal}>
+      {loggedUserProfile ? (
+        <section className="mb-6 rounded-2xl border-2 border-slate-900 bg-slate-50 p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-white">
+                  Usuario logeado
+                </span>
+                <h2 className="text-lg font-bold text-slate-900">{loggedUserProfile.name}</h2>
+              </div>
+              <p className="mt-1 text-sm text-slate-600">{loggedUserProfile.email}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
+                  {loggedUserProfile.role === 'ADMIN' ? 'Administrador' : 'Empleado'}
+                </span>
+                <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
+                  {loggedUserProfile.active ? 'Activo' : 'Inactivo'}
+                </span>
+                <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500">
+                  ID: #{loggedUserProfile.id}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
+                onClick={() => openEditModal(loggedUserProfile)}
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-100"
+                onClick={closeProfileView}
+              >
+                Ocultar
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {!isAdmin ? (
+        <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+          Nota: Solo los administradores pueden registrar y consultar el listado completo de usuarios.
+        </p>
+      ) : (
+        <>
+          <form className="mb-5 flex flex-wrap items-center gap-2" onSubmit={(event) => void search(event)}>
+            <input
+              className="min-w-[260px] rounded-xl border border-slate-200 px-4 py-2 text-sm"
+              placeholder="Buscar usuario por correo"
+              value={searchEmail}
+              onChange={(event) => setSearchEmail(event.target.value)}
+            />
+            <button className="rounded-xl bg-slate-100 px-4 py-2 text-sm text-slate-700 hover:bg-slate-200 transition">
+              Buscar
+            </button>
+            {searchError ? <span className="text-sm text-rose-600">{searchError}</span> : null}
+          </form>
+          {usersError ? <p className="mb-4 text-sm text-rose-600">{usersError}</p> : null}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {users.map((item) => (
+              <article key={item.id} className="rounded-2xl border border-slate-200 p-4 shadow-sm">
+                <h2 className="font-semibold text-slate-900">{item.name}</h2>
+                <p className="text-sm text-slate-500">{item.email}</p>
+                <div className="mt-2 flex gap-2">
+                  <p className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs">
+                    {item.role === 'ADMIN' ? 'Administrador' : 'Empleado'}
+                  </p>
+                  <p className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs">
+                    {item.active ? 'Activo' : 'Inactivo'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="mt-4 rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 hover:bg-slate-200 transition"
+                  onClick={() => openEditModal(item)}
+                >
+                  Editar
+                </button>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+
+      <Modal title={editingUserId === null ? 'Crear usuario' : 'Editar usuario'} isOpen={isModalOpen} onClose={closeModal}>
         <form className="grid gap-3" onSubmit={submit}>
           <label className="grid gap-1 text-sm text-slate-700">
             Nombre
@@ -91,7 +185,7 @@ export const UsersPage = () => {
             />
           </label>
           <label className="grid gap-1 text-sm text-slate-700">
-            Contraseña
+            Contraseña{editingUserId === null ? '' : ' (opcional)'}
             <input
               className="rounded-xl border border-slate-200 px-4 py-2"
               type="password"

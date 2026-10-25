@@ -21,14 +21,13 @@ const emptyBook: BookFormState = {
 
 /** useBooksPage: coordina búsqueda, paginación, formulario y confirmaciones del inventario. HU-03. */
 export const useBooksPage = () => {
-  const { books, createBook, updateBook, removeBook } = useBooks()
+  const { books, createBook, updateBook } = useBooks()
   const pageSize = 10
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form, setForm] = useState<BookFormState>(emptyBook)
   const [submitError, setSubmitError] = useState('')
   const [editingBookId, setEditingBookId] = useState<number | null>(null)
   const [isUpdateConfirmOpen, setIsUpdateConfirmOpen] = useState(false)
-  const [deleteTargetBookId, setDeleteTargetBookId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [successMessage, setSuccessMessage] = useState('')
@@ -74,8 +73,8 @@ export const useBooksPage = () => {
     setEditingBookId(book.id)
     setForm({
       title: book.title,
-      author: book.author,
-      category: book.category,
+      author: book.author ?? '',
+      category: book.category ?? '',
       price: String(book.price),
       stock: String(book.stock),
     })
@@ -232,30 +231,6 @@ export const useBooksPage = () => {
     setIsUpdateConfirmOpen(false)
   }
 
-  const requestDeleteConfirmation = (id: number) => {
-    setDeleteTargetBookId(id)
-  }
-
-  const cancelDeleteConfirmation = () => {
-    setDeleteTargetBookId(null)
-  }
-
-  const confirmDelete = async () => {
-    if (deleteTargetBookId === null) {
-      return
-    }
-
-    try {
-      await removeBook(deleteTargetBookId)
-      setDeleteTargetBookId(null)
-      setSuccessMessage('Libro eliminado correctamente.')
-      setIsSuccessModalOpen(true)
-    } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'No se pudo eliminar el libro.')
-      setDeleteTargetBookId(null)
-    }
-  }
-
   const closeSuccessModal = () => {
     setSuccessMessage('')
     setIsSuccessModalOpen(false)
@@ -270,7 +245,6 @@ export const useBooksPage = () => {
     isModalOpen,
     isUpdateConfirmOpen,
     isSuccessModalOpen,
-    deleteTargetBookId,
     editingBookId,
     form,
     submitError,
@@ -281,9 +255,6 @@ export const useBooksPage = () => {
     requestUpdateConfirmation,
     confirmUpdate,
     cancelUpdateConfirmation,
-    requestDeleteConfirmation,
-    confirmDelete,
-    cancelDeleteConfirmation,
     closeSuccessModal,
     updateTextForm,
     updateNumberForm,

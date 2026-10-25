@@ -4,6 +4,7 @@ import { BookFormModal } from '@/components/books/BookFormModal.tsx'
 import { ClientFormModal } from '@/components/clients/ClientFormModal.tsx'
 import { MessageModal } from '@/components/MessageModal.tsx'
 import { Modal } from '@/components/Modal.tsx'
+import { CartQuantityInput } from '@/components/CartQuantityInput.tsx'
 import { SectionHeader } from '@/components/SectionHeader.tsx'
 import { formatCurrency, formatDateTime } from '@/utils/format.ts'
 import { getSaleNumber } from '@/utils/sale.ts'
@@ -94,13 +95,13 @@ export const SalesPage = () => {
                 {filteredClients.length > 0 ? (
                   filteredClients.map((client) => (
                     <button
-                      key={client.id}
+                      key={client.idClient}
                       type="button"
                       className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
-                      onClick={() => selectClient(client.id, client.name)}
+                      onClick={() => selectClient(client.idClient, client.name)}
                     >
                       <span className="font-medium text-slate-900">{client.name}</span>
-                      <span className="ml-2 text-slate-500">#{client.id}</span>
+                      <span className="ml-2 text-slate-500">#{client.idClient}</span>
                     </button>
                   ))
                 ) : (
@@ -121,8 +122,8 @@ export const SalesPage = () => {
             >
               <option value="">Seleccione un cliente</option>
               {filteredClients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.id} - {client.name}
+                <option key={client.idClient} value={client.idClient}>
+                  {client.idClient} - {client.name}
                 </option>
               ))}
             </select>
@@ -277,13 +278,10 @@ export const SalesPage = () => {
                 <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-2.5">
                   <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
                     Cant.
-                    <input
-                      type="number"
-                      min={1}
-                      max={item.book.stock}
-                      className="h-7 w-16 rounded-lg border border-slate-300 bg-slate-50 px-2 text-sm text-slate-800"
-                      value={item.quantity}
-                      onChange={(event) => updateQuantity(item.book.id, Number(event.target.value))}
+                    <CartQuantityInput
+                      quantity={item.quantity}
+                      stock={item.book.stock}
+                      onChange={(quantity) => updateQuantity(item.book.id, quantity)}
                     />
                   </label>
                   <p className="text-sm font-semibold text-slate-800">{formatCurrency(item.book.price * item.quantity)}</p>
@@ -370,10 +368,10 @@ export const SalesPage = () => {
                 Exportar PDF
               </button>
             </div>
-            <p className="text-sm text-slate-600">Venta #{lastSale.id}</p>
+            <p className="text-sm text-slate-600">            Venta #{lastSale.idSale}</p>
             <p className="text-sm text-slate-600">Número de venta: {getSaleNumber(lastSale)}</p>
-            <p className="text-sm text-slate-600">Fecha: {formatDateTime(lastSale.sold_at)}</p>
-            <p className="text-sm text-slate-600">Cliente: {lastSale.client.name}</p>
+                        <p className="text-sm text-slate-600">Fecha: {formatDateTime(lastSale.date)}</p>
+                        <p className="text-sm text-slate-600">Cliente: {lastSale.client?.name ?? `#${lastSale.idClient}`}</p>
             <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50">
@@ -385,10 +383,10 @@ export const SalesPage = () => {
                 </thead>
                 <tbody>
                   {lastSale.items.map((item) => (
-                    <tr key={item.id} className="border-t border-slate-200">
-                      <td className="px-3 py-2">{item.book.title}</td>
+                    <tr key={item.idDetail} className="border-t border-slate-200">
+                                          <td className="px-3 py-2">{item.bookTitle}</td>
                       <td className="px-3 py-2">{item.quantity}</td>
-                      <td className="px-3 py-2">{formatCurrency(item.line_total)}</td>
+                                          <td className="px-3 py-2">{formatCurrency(item.total)}</td>
                     </tr>
                   ))}
                 </tbody>

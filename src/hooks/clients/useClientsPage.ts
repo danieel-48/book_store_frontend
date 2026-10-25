@@ -1,24 +1,24 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useClients } from '@/hooks/clients/useClients.ts'
-import type { Client, ClientPayload } from '@/types/client.ts'
+import type { Client, ClientFormState, ClientPayload } from '@/types/client.ts'
 import { validateLettersOnly, validateOptionalEmail, validateOptionalPhone } from '@/utils/validation.ts'
 
-const emptyClient: ClientPayload = {
+const emptyClient: ClientFormState = {
+  idNumber: '',
   name: '',
   email: '',
   phone: '',
 }
 
-/** useClientsPage: gestiona el formulario, validaciones, paginación y confirmaciones de clientes. HU-04. */
+/** useClientsPage: gestiona el formulario, validaciones, paginación y confirmaciones de clientes. */
 export const useClientsPage = () => {
-  const { clients, createClient, updateClient, removeClient } = useClients()
+  const { clients, createClient, updateClient } = useClients()
   const pageSize = 15
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [form, setForm] = useState<ClientPayload>(emptyClient)
+  const [form, setForm] = useState<ClientFormState>(emptyClient)
   const [submitError, setSubmitError] = useState('')
   const [editingClientId, setEditingClientId] = useState<number | null>(null)
   const [isUpdateConfirmOpen, setIsUpdateConfirmOpen] = useState(false)
-  const [deleteTargetClientId, setDeleteTargetClientId] = useState<number | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [successMessage, setSuccessMessage] = useState('')
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
@@ -52,11 +52,12 @@ export const useClientsPage = () => {
 
   const openEditModal = (client: Client) => {
     setSubmitError('')
-    setEditingClientId(client.id)
+    setEditingClientId(client.idClient)
     setForm({
+      idNumber: client.idNumber === null ? '' : String(client.idNumber),
       name: client.name,
       email: client.email ?? '',
-      phone: client.phone ?? '',
+      phone: client.phone === null ? '' : String(client.phone),
     })
     setIsModalOpen(true)
   }
@@ -69,47 +70,43 @@ export const useClientsPage = () => {
     setIsUpdateConfirmOpen(false)
   }
 
-  const updateForm = (field: keyof ClientPayload, value: string) => {
+  const updateForm = (field: keyof ClientFormState, value: string) => {
     setSubmitError('')
 
-    if (field === 'phone') {
+    if (field === 'phone' || field === 'idNumber') {
       const onlyDigits = value.replace(/\D/g, '')
-      setForm((current) => ({ ...current, phone: onlyDigits }))
+      setForm((current) => ({ ...current, [field]: onlyDigits }))
       return
     }
 
     setForm((current) => ({ ...current, [field]: value }))
   }
 
-  // Requiere al menos un medio de contacto y normaliza los campos opcionales.
+  // Solo el nombre es obligatorio; el resto de campos se normalizan a null si están vacíos.
   const validateAndBuildPayload = (): ClientPayload | null => {
-    if (!form.email?.trim() && !form.phone?.trim()) {
-      setSubmitError('El correo electrónico o el teléfono son obligatorios.')
-      return null
-    }
-
     const nameError = validateLettersOnly('Nombre', form.name)
     if (nameError) {
       setSubmitError(nameError)
       return null
     }
 
-    const emailError = validateOptionalEmail('Correo electrónico', form.email ?? '')
+    const emailError = validateOptionalEmail('Correo electrónico', form.email)
     if (emailError) {
       setSubmitError(emailError)
       return null
     }
 
-    const phoneError = validateOptionalPhone('Teléfono', form.phone ?? '')
+    const phoneError = validateOptionalPhone('Teléfono', form.phone)
     if (phoneError) {
       setSubmitError(phoneError)
       return null
     }
 
     return {
+      idNumber: form.idNumber.trim() ? Number(form.idNumber) : null,
       name: form.name.trim(),
-      email: form.email?.trim() || null,
-      phone: form.phone?.trim() || null,
+      email: form.email.trim() || null,
+      phone: form.phone.trim() ? Number(form.phone) : null,
     }
   }
 
@@ -183,30 +180,6 @@ export const useClientsPage = () => {
     setIsUpdateConfirmOpen(false)
   }
 
-  const requestDeleteConfirmation = (id: number) => {
-    setDeleteTargetClientId(id)
-  }
-
-  const cancelDeleteConfirmation = () => {
-    setDeleteTargetClientId(null)
-  }
-
-  const confirmDelete = async () => {
-    if (deleteTargetClientId === null) {
-      return
-    }
-
-    try {
-      await removeClient(deleteTargetClientId)
-      setDeleteTargetClientId(null)
-      setSuccessMessage('Cliente eliminado correctamente.')
-      setIsSuccessModalOpen(true)
-    } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'No se pudo eliminar el cliente.')
-      setDeleteTargetClientId(null)
-    }
-  }
-
   const closeSuccessModal = () => {
     setSuccessMessage('')
     setIsSuccessModalOpen(false)
@@ -221,7 +194,6 @@ export const useClientsPage = () => {
     isModalOpen,
     isUpdateConfirmOpen,
     isSuccessModalOpen,
-    deleteTargetClientId,
     editingClientId,
     form,
     submitError,
@@ -232,9 +204,6 @@ export const useClientsPage = () => {
     requestUpdateConfirmation,
     confirmUpdate,
     cancelUpdateConfirmation,
-    requestDeleteConfirmation,
-    confirmDelete,
-    cancelDeleteConfirmation,
     closeSuccessModal,
     updateForm,
     setCurrentPage,

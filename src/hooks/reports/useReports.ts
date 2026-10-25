@@ -1,35 +1,39 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { reportsService } from '@/services/reportsService.ts'
-import type { ReportFilters, ReportResult } from '@/types/report.ts'
-
-const getTodayDate = () => new Date().toISOString().slice(0, 10)
+import type { Book } from '@/types/book.ts'
+import type { Client } from '@/types/client.ts'
+import type { User } from '@/types/user.ts'
+import type { ReportData, ReportFilters, ReportResult } from '@/types/report.ts'
+import { toLocalDate } from '@/utils/format.ts'
+import { buildReport } from '@/utils/report.ts'
 
 const defaultFilters: ReportFilters = {
   period: 'daily',
-  date: getTodayDate(),
+  date: toLocalDate(),
 }
 
-/** useReports: solicita los datos del reporte cada vez que cambian sus filtros. HU-06. */
-export const useReports = () => {
+/** useReports: solicita ventas y detalles (/api/sale-details) y arma el reporte según los filtros. */
+export const useReports = (books: Book[], clients: Client[], users: User[]) => {
   const [filters, setFilters] = useState<ReportFilters>(defaultFilters)
-  const [result, setResult] = useState<ReportResult>({ summary: [], sales: [] })
+  const [data, setData] = useState<ReportData>({ sales: [], details: [] })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const result = useMemo<ReportResult>(() => buildReport(data, books, clients, filters, users), [data, books, clients, filters, users])
 
   const loadReports = useCallback(async () => {
     setIsLoading(true)
     setError('')
 
     try {
-      const response = await reportsService.sales(filters)
-      setResult(response.data)
+      setData(await reportsService.sales(filters))
     } catch (exception) {
-      setResult({ summary: [], sales: [] })
+      setData({ sales: [], details: [] })
       setError(exception instanceof Error ? exception.message : 'No se pudieron cargar los reportes.')
     } finally {
       setIsLoading(false)
     }
-  }, [filters])
+  }, [filters.idClient, filters.idUser]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

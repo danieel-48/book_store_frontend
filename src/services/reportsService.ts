@@ -1,19 +1,25 @@
 import { apiRequest } from '@/services/api.ts'
-import type { ReportFilters, ReportResult } from '@/types/report.ts'
+import type { ReportData, ReportFilters } from '@/types/report.ts'
+import type { SaleDetail, SaleRecord } from '@/types/sale.ts'
 
 const toQueryString = (filters: ReportFilters) => {
   const params = new URLSearchParams()
-  params.set('period', filters.period)
 
-  if (filters.client_id) params.set('client_id', filters.client_id)
-  if (filters.book_id) params.set('book_id', filters.book_id)
-  if (filters.user_id) params.set('user_id', filters.user_id)
-  if (filters.date) params.set('date', filters.date)
+  if (filters.idClient) params.set('idClient', filters.idClient)
+  if (filters.idUser) params.set('idUser', filters.idUser)
 
-  return params.toString()
+  const query = params.toString()
+  return query ? `?${query}` : ''
 }
 
-/** reportsService: consulta /reports/sales y serializa los filtros como parámetros URL. HU-06. */
+/** reportsService: obtiene los detalles de venta (/api/sale-details) y las ventas filtradas por cliente y usuario. */
 export const reportsService = {
-  sales: (filters: ReportFilters) => apiRequest<ReportResult>(`/api/reports/sales?${toQueryString(filters)}`),
+  sales: async (filters: ReportFilters): Promise<ReportData> => {
+    const [sales, details] = await Promise.all([
+      apiRequest<SaleRecord[]>(`/api/sales${toQueryString(filters)}`),
+      apiRequest<SaleDetail[]>('/api/sale-details'),
+    ])
+
+    return { sales, details }
+  },
 }

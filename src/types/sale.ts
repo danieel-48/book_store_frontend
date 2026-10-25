@@ -7,31 +7,42 @@ export type CartItem = {
   quantity: number
 }
 
-export type SaleItemPayload = {
-  book_id: number
+export type SalePayload = {
+  date?: string
+  idClient: number
+  idUser?: number
+}
+
+export type SaleRecord = {
+  idSale: number
+  date: string | null
+  total: number
+  idClient: number
+  idUser: number | null
+}
+
+export type SaleDetailPayload = {
+  idSale: number
+  idBook: number
   quantity: number
 }
 
-export type SalePayload = {
-  client_id: number
-  items: SaleItemPayload[]
+export type SaleDetail = SaleDetailPayload & {
+  idDetail: number
+  total: number
 }
 
 export type SaleItem = {
-  id: number
+  idDetail: number
+  idBook: number
+  bookTitle: string
   quantity: number
-  unit_price: number
-  line_total: number
-  book: Book
+  unitPrice: number
+  total: number
 }
 
-export type Sale = {
-  id: number
-  sale_number?: string
-  bill_number?: string
-  client: Client
-  user: User
-  total: number
-  sold_at: string
+export type Sale = SaleRecord & {
+  client: Client | null
+  user: User | null
   items: SaleItem[]
 }

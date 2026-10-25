@@ -1,6 +1,5 @@
 /** BooksPage: consulta y administra el catálogo de libros. Historia: HU-03. Props: ninguna; obtiene estado y acciones desde useBooksPage. */
-import { Pencil, Trash2 } from 'lucide-react'
-import { useAuth } from '@/app/useAuth'
+import { Pencil } from 'lucide-react'
 import { MessageModal } from '@/components/MessageModal.tsx'
 import { Modal } from '@/components/Modal.tsx'
 import { SectionHeader } from '@/components/SectionHeader.tsx'
@@ -9,7 +8,6 @@ import { BookFormModal } from '@/components/books/BookFormModal.tsx'
 import { useBooksPage } from '@/hooks/books/useBooksPage.ts'
 
 export const BooksPage = () => {
-  const { user } = useAuth()
   const {
     books,
     searchQuery,
@@ -19,7 +17,6 @@ export const BooksPage = () => {
     isModalOpen,
     isUpdateConfirmOpen,
     isSuccessModalOpen,
-    deleteTargetBookId,
     editingBookId,
     form,
     submitError,
@@ -30,9 +27,6 @@ export const BooksPage = () => {
     requestUpdateConfirmation,
     confirmUpdate,
     cancelUpdateConfirmation,
-    requestDeleteConfirmation,
-    confirmDelete,
-    cancelDeleteConfirmation,
     closeSuccessModal,
     updateTextForm,
     updateNumberForm,
@@ -40,7 +34,6 @@ export const BooksPage = () => {
     setCurrentPage,
     submit,
   } = useBooksPage()
-  const canDeleteBooks = user?.role === 'ADMIN'
 
   return (
     <div>
@@ -105,16 +98,6 @@ export const BooksPage = () => {
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
-                  {canDeleteBooks ? (
-                    <button
-                      type="button"
-                      aria-label="Eliminar libro"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-rose-200 bg-white text-slate-600 transition hover:bg-rose-50"
-                      onClick={() => requestDeleteConfirmation(book.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  ) : null}
                 </div>
               </div>
             </article>
@@ -171,22 +154,6 @@ export const BooksPage = () => {
           </div>
         </div>
       </Modal>
-
-      {canDeleteBooks ? (
-        <Modal title="Confirmar eliminación" isOpen={deleteTargetBookId !== null} onClose={cancelDeleteConfirmation}>
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600">¿Está seguro de que desea eliminar este libro?</p>
-            <div className="flex justify-end gap-2">
-              <button className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700" onClick={cancelDeleteConfirmation}>
-                Cancelar
-              </button>
-              <button className="rounded-lg bg-rose-600 px-3 py-2 text-sm text-white" onClick={() => void confirmDelete()}>
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </Modal>
-      ) : null}
 
       <MessageModal message={successMessage} isOpen={isSuccessModalOpen} onClose={closeSuccessModal} />
     </div>

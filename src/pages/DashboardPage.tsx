@@ -1,4 +1,5 @@
-/** DashboardPage: muestra indicadores principales y accesos a los módulos. Historia: HU-02. Props: ninguna; carga los datos mediante useDashboard. */
+// DashboardPage: presenta las métricas consolidadas del negocio y accesos rápidos · HU-02 panel de control
+// Props: ninguna (página conectada a AppRouter)
 import { BookOpen, DollarSign, Receipt, UsersRound } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { SectionHeader } from '@/components/SectionHeader.tsx'
@@ -6,9 +7,11 @@ import { formatCurrency } from '@/utils/format.ts'
 import { useDashboard } from '@/hooks/dashboard/useDashboard.ts'
 
 export const DashboardPage = () => {
+  // Hook que consulta métricas diarias de libros, clientes y ventas desde la API (HU-02)
   const { stats } = useDashboard()
   const navigate = useNavigate()
 
+  // Tarjetas informativas con indicadores clave de rendimiento (KPIs)
   const cards = [
     { label: 'Libros en inventario', value: stats.totalBooks, icon: BookOpen, color: 'from-amber-100 to-orange-50', iconColor: 'text-amber-700', to: '/books' },
     { label: 'Clientes registrados', value: stats.totalClients, icon: UsersRound, color: 'from-sky-100 to-cyan-50', iconColor: 'text-sky-700', to: '/clients' },
@@ -34,6 +37,7 @@ export const DashboardPage = () => {
         {cards.map((card) => {
           const Icon = card.icon
           return (
+            /* onClick navega directamente al módulo operativo correspondiente */
             <button
               key={card.label}
               type="button"

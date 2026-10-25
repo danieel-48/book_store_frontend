@@ -1,8 +1,11 @@
+// utils/pdf.ts: generación y descarga de comprobantes de venta en formato PDF · HU-06 y HU-07
+// Funciones exportadas: exportSaleBillPdf
 import jsPDF from 'jspdf'
 import type { Sale } from '@/types/sale.ts'
 import { formatCurrency, formatDateTime } from '@/utils/format.ts'
 import { getSaleNumber } from '@/utils/sale.ts'
 
+// HU-06 y HU-07: genera la factura de venta en PDF con detalles de cliente, libros, totales y pie de página
 export const exportSaleBillPdf = (sale: Sale) => {
   const doc = new jsPDF()
   const pageWidth = doc.internal.pageSize.getWidth()
@@ -10,6 +13,7 @@ export const exportSaleBillPdf = (sale: Sale) => {
   const left = 14
   const right = pageWidth - 14
 
+  // Encabezado institucional
   doc.setFillColor(15, 23, 42)
   doc.rect(0, 0, pageWidth, 34, 'F')
   doc.setTextColor(255, 255, 255)
@@ -22,6 +26,7 @@ export const exportSaleBillPdf = (sale: Sale) => {
   doc.setDrawColor(203, 213, 225)
   doc.setLineWidth(0.3)
 
+  // Datos del cliente
   doc.setFontSize(10)
   doc.roundedRect(left, 42, 86, 34, 3, 3)
   doc.text('FACTURAR A', left + 4, 49)
@@ -33,12 +38,14 @@ export const exportSaleBillPdf = (sale: Sale) => {
     doc.text(`Correo: ${sale.client.email}`, left + 4, 71)
   }
 
+  // Datos de la venta
   doc.roundedRect(right - 72, 42, 72, 46, 3, 3)
   doc.text('DETALLES', right - 68, 49)
   doc.text(`Venta No: ${saleNumber}`, right - 68, 57)
   doc.text(`Fecha: ${formatDateTime(sale.date)}`, right - 68, 71)
   doc.text(`Vendedor: ${sale.user?.name ?? 'N/D'}`, right - 68, 78)
 
+  // Tabla de libros vendidos
   let y = 100
   doc.setFillColor(241, 245, 249)
   doc.rect(left, y, right - left, 10, 'F')
@@ -55,13 +62,14 @@ export const exportSaleBillPdf = (sale: Sale) => {
 
     doc.text(titleLines, left + 3, y)
     doc.text(String(item.quantity), left + 111, y)
-    doc.text(    formatCurrency(item.unitPrice), left + 128, y)
-        doc.text(formatCurrency(item.total), left + 165, y)
+    doc.text(formatCurrency(item.unitPrice), left + 128, y)
+    doc.text(formatCurrency(item.total), left + 165, y)
     doc.line(left, y + rowHeight - 4, right, y + rowHeight - 4)
 
     y += rowHeight
   })
 
+  // Totales
   y += 4
   const summaryX = right - 72
   doc.setFontSize(11)
@@ -78,5 +86,6 @@ export const exportSaleBillPdf = (sale: Sale) => {
   doc.text('Gracias por su compra.', left, y)
   doc.text('Conserve esta factura para sus registros.', left, y + 6)
 
+  // Guarda y descarga el archivo PDF
   doc.save(`sale-${saleNumber}.pdf`)
 }

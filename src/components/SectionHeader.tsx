@@ -1,4 +1,5 @@
-/** SectionHeader: presenta el título, la descripción y las acciones de una pantalla. Historias: HU-02 a HU-07. Props: SectionHeaderProps (title, description y actions opcionales). */
+// SectionHeader: encabezado estándar con título, descripción y botones de acción · HU-02 a HU-08
+// Props: title (título de la pantalla), description (descripción de la funcionalidad), actions (botones de acción opcionales)
 type SectionHeaderProps = {
   title: string
   description: string
@@ -11,6 +12,7 @@ export const SectionHeader = ({ title, description, actions }: SectionHeaderProp
       <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
       <p className="mt-1 text-sm text-slate-600">{description}</p>
     </div>
+    {/* Acciones principales de la vista (ej: botones nuevo elemento o filtros) */}
     {actions}
   </header>
 )

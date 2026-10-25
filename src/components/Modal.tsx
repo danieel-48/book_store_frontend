@@ -1,4 +1,5 @@
-/** Modal: contenedor reutilizable para formularios y confirmaciones. Historias: HU-03, HU-04, HU-05, HU-07. Props: ModalProps (título, visibilidad, cierre, tamaño y contenido). */
+// Modal: contenedor flotante reutilizable para formularios y confirmaciones · HU-03, HU-04, HU-05, HU-06
+// Props: title (título modal), isOpen (visibilidad), onClose (callback cierre al padre), size (tamaño opcional), children (contenido interno)
 type ModalProps = {
   title: string
   isOpen: boolean
@@ -14,6 +15,7 @@ const sizeClassMap: Record<NonNullable<ModalProps['size']>, string> = {
 }
 
 export const Modal = ({ title, isOpen, onClose, size = 'sm', children }: ModalProps) => {
+  // Si no está abierto, no renderiza nada en el DOM
   if (!isOpen) {
     return null
   }
@@ -23,6 +25,7 @@ export const Modal = ({ title, isOpen, onClose, size = 'sm', children }: ModalPr
       <div className={`w-full ${sizeClassMap[size]} rounded-2xl bg-white p-6 shadow-2xl`}>
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-xl font-semibold text-slate-900">{title}</h3>
+          {/* onClick avisa al componente padre para cerrar la ventana modal */}
           <button
             onClick={onClose}
             aria-label="Cerrar modal"

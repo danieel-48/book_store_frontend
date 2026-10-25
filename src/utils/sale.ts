@@ -1,8 +1,11 @@
+// utils/sale.ts: funciones auxiliares para estructurar objetos de venta y comprobantes · HU-06 y HU-07
+// Funciones exportadas: getSaleNumber, buildSale
 import type { Book } from '@/types/book.ts'
 import type { Client } from '@/types/client.ts'
 import type { Sale, SaleDetail, SaleRecord } from '@/types/sale.ts'
 import type { User } from '@/types/user.ts'
 
+// Genera un número legible de comprobante basado en la fecha y el ID de la venta
 export const getSaleNumber = (sale: Pick<Sale, 'idSale' | 'date'>) => {
   if (!sale.date) {
     return String(sale.idSale)
@@ -11,7 +14,7 @@ export const getSaleNumber = (sale: Pick<Sale, 'idSale' | 'date'>) => {
   return `${sale.date.slice(0, 10).replaceAll('-', '')}-${sale.idSale}`
 }
 
-// Une una venta con sus detalles, los libros, el cliente y el vendedor para presentarla en pantalla.
+// HU-06 y HU-07: une el registro de venta con sus detalles, libros, cliente y usuario para visualización completa
 export const buildSale = (
   record: SaleRecord,
   details: SaleDetail[],

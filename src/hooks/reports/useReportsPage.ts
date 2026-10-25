@@ -1,3 +1,5 @@
+// useReportsPage: coordina filtros, datos auxiliares, paginación y exportación de reportes · HU-07 reportes de ventas
+// Retorna: estados y manejadores de la pantalla de reportes
 import jsPDF from 'jspdf'
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@/app/useAuth'
@@ -16,7 +18,6 @@ const periodLabels = {
   yearly: 'anual',
 } as const
 
-/** useReportsPage: coordina filtros, datos auxiliares, paginación y exportación de reportes. HU-06. */
 export const useReportsPage = () => {
   const pageSize = 10
   const { user } = useAuth()
@@ -24,8 +25,8 @@ export const useReportsPage = () => {
   const { books, error: booksError } = useBooks()
   const { users, error: usersError } = useUsers()
   const { filters, setFilters, result, isLoading, error } = useReports(books, clients, users)
-  const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null) // estado: venta seleccionada para modal de detalle
+  const [currentPage, setCurrentPage] = useState(1) // estado: página actual en el listado de ventas
 
   const totalPages = Math.max(1, Math.ceil(result.sales.length / pageSize))
 
@@ -56,6 +57,7 @@ export const useReportsPage = () => {
     [result.summary],
   )
 
+  // HU-07: genera reporte consolidado en PDF y dispara la descarga en el navegador
   const exportPdf = () => {
     const doc = new jsPDF()
     doc.setFontSize(16)
@@ -74,6 +76,7 @@ export const useReportsPage = () => {
     doc.save(`bookstore-reporte-${filters.period}.pdf`)
   }
 
+  // HU-07: exporta la factura/comprobante individual de una venta en PDF
   const exportSaleBill = (sale: Sale) => {
     exportSaleBillPdf(sale)
   }

@@ -1,4 +1,5 @@
-/** SalesPage: registra ventas y permite consultar sus detalles. Historia: HU-05. Props: ninguna; delega estado y operaciones a useSalesPage. */
+// SalesPage: gestiona el punto de venta POS, filtros de libros, carrito y facturación · HU-06 ventas POS
+// Props: ninguna (página conectada a AppRouter)
 import { CircleCheck, FileDown, Filter, Trash2 } from 'lucide-react'
 import { BookFormModal } from '@/components/books/BookFormModal.tsx'
 import { ClientFormModal } from '@/components/clients/ClientFormModal.tsx'
@@ -11,6 +12,7 @@ import { getSaleNumber } from '@/utils/sale.ts'
 import { useSalesPage } from '@/hooks/sales/useSalesPage.ts'
 
 export const SalesPage = () => {
+  // Hook que coordina la lógica de venta POS, carrito, clientes y filtros en la API (HU-06)
   const {
     books,
     booksPage,
@@ -91,6 +93,7 @@ export const SalesPage = () => {
     <div>
       <SectionHeader title="Ventas POS" description="Cobro rápido con validación de existencias en tiempo real y totales del carrito." />
 
+      {/* Bloque superior para selección de cliente y búsqueda rápida de libros */}
       <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-end gap-3">
           <label className="relative min-w-[260px] flex-1 grid gap-1 text-sm text-slate-700">
@@ -140,6 +143,7 @@ export const SalesPage = () => {
             </select>
           </label>
 
+          {/* onClick abre modal para registrar cliente sin salir del POS */}
           <button className="rounded-xl bg-slate-900 px-4 py-2 text-white" onClick={openClientModal}>
             Nuevo cliente
           </button>
@@ -173,13 +177,14 @@ export const SalesPage = () => {
             ) : null}
           </label>
 
+          {/* onClick abre modal para crear un libro directamente */}
           <button className="rounded-xl bg-slate-900 px-4 py-2 text-white" onClick={openBookModal}>
             Nuevo libro
           </button>
         </div>
       </section>
 
-      {/* Apartado para filtrar libros por categoría y precio */}
+      {/* Apartado para filtrar libros por categoría y precio en la API (HU-06) */}
       <section className="mb-6 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -192,6 +197,7 @@ export const SalesPage = () => {
             ) : null}
           </div>
           {activeFiltersCount > 0 ? (
+            /* onClick restablece los filtros y consulta el catálogo sin parámetros en la API */
             <button
               type="button"
               onClick={() => void clearBookFilters()}
@@ -202,6 +208,7 @@ export const SalesPage = () => {
           ) : null}
         </div>
 
+        {/* onSubmit ejecuta la consulta GET /api/books?category=&minPrice=&maxPrice= */}
         <form onSubmit={(e) => void applyBookFilters(e)} className="flex flex-wrap items-end gap-3">
           <label className="min-w-[240px] flex-[2] grid gap-1 text-sm font-medium text-slate-700">
             Categoría
@@ -266,6 +273,7 @@ export const SalesPage = () => {
         {filterError ? <p className="mt-2 text-xs font-medium text-rose-600">{filterError}</p> : null}
       </section>
 
+      {/* Cuadrícula de libros a la venta y carrito de compras */}
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
         <section>
           {isBooksLoading ? <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-600">Cargando libros...</p> : null}
@@ -292,6 +300,7 @@ export const SalesPage = () => {
                       <p className="font-semibold text-slate-900">{formatCurrency(book.price)}</p>
                       <p className="text-sm text-slate-600">Existencia {book.stock}</p>
                     </div>
+                    {/* onClick agrega el libro al carrito validando stock disponible */}
                     <button
                       onClick={() => addBook(book.id)}
                       disabled={book.stock === 0}
@@ -305,6 +314,7 @@ export const SalesPage = () => {
             </div>
           ) : null}
 
+          {/* Paginación de libros en POS */}
           {!isBooksLoading && !booksError && totalBooksPages > 1 ? (
             <div className="mt-4 flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
               <p>
@@ -343,6 +353,7 @@ export const SalesPage = () => {
             </div>
           ) : null}
 
+          {/* Botón para procesar la venta en la API (POST /api/sales y /api/sale-details) */}
           <button
             onClick={() => void completeSale()}
             disabled={isSubmitting || cart.length === 0 || !clientId}
@@ -356,6 +367,7 @@ export const SalesPage = () => {
           {saleError ? <p className="mt-3 text-sm text-slate-600">{saleError}</p> : null}
         </section>
 
+        {/* Panel lateral del carrito de compras */}
         <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-slate-900">Carrito de compras</h2>
           <div className="space-y-3">
@@ -371,6 +383,7 @@ export const SalesPage = () => {
                     stock={item.book.stock}
                     onChange={(next) => updateQuantity(item.book.id, next)}
                   />
+                  {/* onClick solicita confirmación para remover el libro del carrito */}
                   <button
                     onClick={() => requestRemoveItemConfirmation(item.book.id)}
                     className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
@@ -391,6 +404,7 @@ export const SalesPage = () => {
         </aside>
       </div>
 
+      {/* Modal para crear cliente ágilmente */}
       <ClientFormModal
         title="Crear cliente"
         isOpen={isClientModalOpen}
@@ -402,6 +416,7 @@ export const SalesPage = () => {
         submitLabel="Guardar"
       />
 
+      {/* Modal para crear nuevo libro */}
       <BookFormModal
         title="Crear libro"
         isOpen={isBookModalOpen}
@@ -434,6 +449,7 @@ export const SalesPage = () => {
         onClose={closeCreateSuccessModal}
       />
 
+      {/* Modal de confirmación para eliminar libro del carrito */}
       <Modal
         title="Confirmar eliminación de libro"
         isOpen={removeItemTargetBookId !== null}
@@ -457,11 +473,13 @@ export const SalesPage = () => {
         </div>
       </Modal>
 
+      {/* Modal de detalle de venta completada con exportación de factura PDF */}
       <Modal title="Detalle de la venta" size="lg" isOpen={Boolean(lastSale)} onClose={closeSaleDetail}>
         {lastSale ? (
           <div>
             {saleSuccessMessage ? <p className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{saleSuccessMessage}</p> : null}
             <div className="mb-2 flex justify-end">
+              {/* onClick genera y descarga la factura en formato PDF */}
               <button
                 type="button"
                 className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white"
@@ -471,7 +489,7 @@ export const SalesPage = () => {
                 Exportar PDF
               </button>
             </div>
-            <p className="text-sm text-slate-600">            Venta #{lastSale.idSale}</p>
+            <p className="text-sm text-slate-600">Venta #{lastSale.idSale}</p>
             <p className="text-sm text-slate-600">Número de venta: {getSaleNumber(lastSale)}</p>
             <p className="text-sm text-slate-600">Fecha: {formatDateTime(lastSale.date)}</p>
             <p className="text-sm text-slate-600">Cliente: {lastSale.client?.name ?? `#${lastSale.idClient}`}</p>

@@ -1,3 +1,5 @@
+// useReports: solicita ventas y detalles a la API y construye el reporte consolidado · HU-07 reportes de ventas
+// Retorna: { filters, setFilters, result, isLoading, error, reload }
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { reportsService } from '@/services/reportsService.ts'
 import type { Book } from '@/types/book.ts'
@@ -12,15 +14,16 @@ const defaultFilters: ReportFilters = {
   date: toLocalDate(),
 }
 
-/** useReports: solicita ventas y detalles (/api/sale-details) y arma el reporte según los filtros. */
 export const useReports = (books: Book[], clients: Client[], users: User[]) => {
-  const [filters, setFilters] = useState<ReportFilters>(defaultFilters)
-  const [data, setData] = useState<ReportData>({ sales: [], details: [] })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [filters, setFilters] = useState<ReportFilters>(defaultFilters) // estado: filtros de período, fecha, cliente, libro y usuario
+  const [data, setData] = useState<ReportData>({ sales: [], details: [] }) // estado: datos crudos de ventas y detalles desde la API
+  const [isLoading, setIsLoading] = useState(false) // estado: indicador de carga en curso
+  const [error, setError] = useState('') // estado: mensaje de error de consulta
 
+  // Agrupa y calcula totales de ventas según filtros aplicados
   const result = useMemo<ReportResult>(() => buildReport(data, books, clients, filters, users), [data, books, clients, filters, users])
 
+  // HU-07: consulta ventas y detalles en la API REST
   const loadReports = useCallback(async () => {
     setIsLoading(true)
     setError('')
@@ -35,6 +38,7 @@ export const useReports = (books: Book[], clients: Client[], users: User[]) => {
     }
   }, [filters.idClient, filters.idUser]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Al cambiar filtros o montar la pantalla, recarga el reporte desde la API (HU-07)
   useEffect(() => {
     const timer = window.setTimeout(() => {
       void loadReports()

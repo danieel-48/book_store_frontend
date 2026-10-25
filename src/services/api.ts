@@ -1,3 +1,6 @@
+// services/api.ts: cliente HTTP base para comunicación con la API REST del backend
+// HU-01 a HU-08: intercepta solicitudes fetch, serializa JSON y gestiona códigos de error HTTP
+
 export class ApiError extends Error {
   status: number
 
@@ -15,6 +18,7 @@ type ErrorBody = {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '')
 
+// HU-01 a HU-08: función genérica para peticiones HTTP con control de errores y parsing JSON
 export const apiRequest = async <T>(path: string, options: RequestInit = {}): Promise<T> => {
   if (!API_BASE_URL) {
     throw new Error('Falta configurar VITE_API_URL en el entorno.')
@@ -68,7 +72,7 @@ export const apiRequest = async <T>(path: string, options: RequestInit = {}): Pr
   return payload as T
 }
 
-// Mensajes en español para 404 y 409 según el recurso consultado.
+// Mensajes amigables en español para 404 y 409 según el recurso consultado en la API REST
 const notFoundMessages: [string, string][] = [
   ['/api/sale-details', 'No se encontró el detalle de venta o el libro/venta indicado.'],
   ['/api/sales', 'No se encontró la venta, el cliente o el usuario indicado.'],

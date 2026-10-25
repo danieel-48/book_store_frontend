@@ -1,8 +1,10 @@
-/** LoginPage: presenta el formulario de acceso al sistema. Historia: HU-01. Props: ninguna; delega validación y envío al hook useLoginForm. */
+// LoginPage: presenta el formulario de acceso al sistema · HU-01 inicio de sesión
+// Props: ninguna (página conectada a AppRouter)
 import { BookOpenText } from 'lucide-react'
 import { useLoginForm } from '@/hooks/auth/useLoginForm.ts'
 
 export const LoginPage = () => {
+  // Hook que gestiona las credenciales, validación y autenticación en la API (HU-01)
   const { email, password, error, isSubmitting, setEmail, setPassword, submit } = useLoginForm()
 
   return (
@@ -16,6 +18,7 @@ export const LoginPage = () => {
           </p>
         </div>
 
+        {/* onSubmit ejecuta submit para validar credenciales y llamar a POST /api/auth/login (HU-01) */}
         <form onSubmit={submit} className="rounded-3xl border border-slate-200 bg-white p-10 text-slate-900 shadow-2xl">
           <div className="mb-8 flex items-center gap-3">
             <BookOpenText className="h-7 w-7 text-slate-500" />
@@ -43,6 +46,7 @@ export const LoginPage = () => {
 
           {error ? <p className="mb-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{error}</p> : null}
 
+          {/* Botón de acceso: bloqueado mientras se procesa la solicitud a la API */}
           <button
             type="submit"
             disabled={isSubmitting}

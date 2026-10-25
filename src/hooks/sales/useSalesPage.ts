@@ -1,3 +1,5 @@
+// useSalesPage: coordina búsqueda, filtros avanzados, formularios auxiliares y flujo POS · HU-06 punto de venta
+// Retorna: estados y manejadores del terminal de punto de venta (POS)
 import { useEffect, useMemo, useState } from 'react'
 import type { ClientFormState } from '@/types/client.ts'
 import type { BookFilters, BookPayload } from '@/types/book.ts'
@@ -28,36 +30,35 @@ const emptyBookForm = {
   stock: '',
 }
 
-/** useSalesPage: coordina búsqueda, formularios auxiliares y presentación del flujo POS. HU-05. */
 export const useSalesPage = () => {
   const sales = useSalesPOS()
   const booksPageSize = 12
-  const [isClientModalOpen, setIsClientModalOpen] = useState(false)
-  const [clientForm, setClientForm] = useState<ClientFormState>(emptyClientForm)
-  const [clientSearch, setClientSearch] = useState('')
-  const [isClientResultsOpen, setIsClientResultsOpen] = useState(false)
-  const [clientSubmitError, setClientSubmitError] = useState('')
-  const [bookSearch, setBookSearch] = useState('')
-  const [isBookResultsOpen, setIsBookResultsOpen] = useState(false)
-  const [isBookModalOpen, setIsBookModalOpen] = useState(false)
-  const [bookSubmitError, setBookSubmitError] = useState('')
-  const [bookTitle, setBookTitle] = useState(emptyBookForm.title)
-  const [bookAuthor, setBookAuthor] = useState(emptyBookForm.author)
-  const [bookCategory, setBookCategory] = useState(emptyBookForm.category)
-  const [bookPrice, setBookPrice] = useState(emptyBookForm.price)
-  const [bookStock, setBookStock] = useState(emptyBookForm.stock)
-  const [booksPage, setBooksPage] = useState(1)
-  const [saleSuccessMessage, setSaleSuccessMessage] = useState('')
-  const [createSuccessMessage, setCreateSuccessMessage] = useState('')
-  const [isCreateSuccessModalOpen, setIsCreateSuccessModalOpen] = useState(false)
-  const [removeItemTargetBookId, setRemoveItemTargetBookId] = useState<number | null>(null)
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false) // estado: visibilidad modal de nuevo cliente
+  const [clientForm, setClientForm] = useState<ClientFormState>(emptyClientForm) // estado: formulario rápido de cliente
+  const [clientSearch, setClientSearch] = useState('') // estado: búsqueda de cliente por ID o nombre
+  const [isClientResultsOpen, setIsClientResultsOpen] = useState(false) // estado: desplegable de sugerencias de clientes
+  const [clientSubmitError, setClientSubmitError] = useState('') // estado: error al crear cliente
+  const [bookSearch, setBookSearch] = useState('') // estado: búsqueda de libro por ID o título
+  const [isBookResultsOpen, setIsBookResultsOpen] = useState(false) // estado: desplegable de sugerencias de libros
+  const [isBookModalOpen, setIsBookModalOpen] = useState(false) // estado: visibilidad modal de nuevo libro
+  const [bookSubmitError, setBookSubmitError] = useState('') // estado: error al crear libro
+  const [bookTitle, setBookTitle] = useState(emptyBookForm.title) // estado: título del libro a crear
+  const [bookAuthor, setBookAuthor] = useState(emptyBookForm.author) // estado: autor del libro a crear
+  const [bookCategory, setBookCategory] = useState(emptyBookForm.category) // estado: categoría del libro a crear
+  const [bookPrice, setBookPrice] = useState(emptyBookForm.price) // estado: precio del libro a crear
+  const [bookStock, setBookStock] = useState(emptyBookForm.stock) // estado: stock del libro a crear
+  const [booksPage, setBooksPage] = useState(1) // estado: página actual del catálogo de libros
+  const [saleSuccessMessage, setSaleSuccessMessage] = useState('') // estado: confirmación de venta realizada
+  const [createSuccessMessage, setCreateSuccessMessage] = useState('') // estado: mensaje de éxito para cliente o libro creado
+  const [isCreateSuccessModalOpen, setIsCreateSuccessModalOpen] = useState(false) // estado: modal de creación exitosa
+  const [removeItemTargetBookId, setRemoveItemTargetBookId] = useState<number | null>(null) // estado: ID de artículo a eliminar del carrito
 
-  // Estados para filtro por categoría y precio en Sales
-  const [filterCategory, setFilterCategory] = useState('')
-  const [filterMinPrice, setFilterMinPrice] = useState('')
-  const [filterMaxPrice, setFilterMaxPrice] = useState('')
-  const [filterError, setFilterError] = useState('')
-  const [activeFiltersCount, setActiveFiltersCount] = useState(0)
+  // Estados para filtro por categoría y precio en Sales (HU-06)
+  const [filterCategory, setFilterCategory] = useState('') // estado: categoría seleccionada para filtrar
+  const [filterMinPrice, setFilterMinPrice] = useState('') // estado: precio mínimo del filtro
+  const [filterMaxPrice, setFilterMaxPrice] = useState('') // estado: precio máximo del filtro
+  const [filterError, setFilterError] = useState('') // estado: error de validación de los filtros
+  const [activeFiltersCount, setActiveFiltersCount] = useState(0) // estado: cantidad de filtros aplicados
 
   const availableCategories = useMemo(() => {
     const set = new Set<string>()
@@ -69,6 +70,7 @@ export const useSalesPage = () => {
     return Array.from(set).sort()
   }, [sales.books])
 
+  // HU-06: consulta libros filtrados por categoría y precio en la API
   const applyBookFilters = async (event?: React.FormEvent) => {
     if (event) {
       event.preventDefault()
@@ -110,6 +112,7 @@ export const useSalesPage = () => {
     await sales.reloadBooks(filters)
   }
 
+  // HU-06: restablece filtros y recarga el catálogo completo desde la API
   const clearBookFilters = async () => {
     setFilterCategory('')
     setFilterMinPrice('')
@@ -211,6 +214,7 @@ export const useSalesPage = () => {
     sales.addBook(id)
   }
 
+  // HU-06: completa la venta en el POS y muestra confirmación
   const completeSale = async () => {
     setSaleSuccessMessage('')
     const isCompleted = await sales.completeSale()
@@ -228,6 +232,7 @@ export const useSalesPage = () => {
     setSaleSuccessMessage('Sale completed successfully.')
   }
 
+  // HU-06: exporta el comprobante de la venta registrada a PDF
   const exportLastSaleBill = () => {
     if (!sales.lastSale) {
       return
@@ -236,6 +241,7 @@ export const useSalesPage = () => {
     exportSaleBillPdf(sales.lastSale)
   }
 
+  // HU-04: registra cliente rápido directamente desde el flujo de ventas
   const submitClient = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -303,6 +309,7 @@ export const useSalesPage = () => {
     setIsBookModalOpen(false)
   }
 
+  // HU-05: registra libro rápido directamente desde la vista POS
   const submitBook = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 

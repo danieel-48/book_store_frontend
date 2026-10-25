@@ -1,3 +1,5 @@
+// useBooksPage: coordina la lógica de búsqueda, paginación, formularios y confirmaciones del inventario · HU-05 inventario de libros
+// Retorna: estados y manejadores de la página de libros
 import { useEffect, useMemo, useState } from 'react'
 import { useBooks } from '@/hooks/books/useBooks.ts'
 import type { Book, BookPayload } from '@/types/book.ts'
@@ -19,20 +21,20 @@ const emptyBook: BookFormState = {
   stock: '',
 }
 
-/** useBooksPage: coordina búsqueda, paginación, formulario y confirmaciones del inventario. HU-03. */
 export const useBooksPage = () => {
   const { books, createBook, updateBook } = useBooks()
   const pageSize = 10
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [form, setForm] = useState<BookFormState>(emptyBook)
-  const [submitError, setSubmitError] = useState('')
-  const [editingBookId, setEditingBookId] = useState<number | null>(null)
-  const [isUpdateConfirmOpen, setIsUpdateConfirmOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [successMessage, setSuccessMessage] = useState('')
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false) // estado: visibilidad del modal de formulario
+  const [form, setForm] = useState<BookFormState>(emptyBook) // estado: campos del formulario del libro
+  const [submitError, setSubmitError] = useState('') // estado: error de validación o del servidor
+  const [editingBookId, setEditingBookId] = useState<number | null>(null) // estado: ID del libro editado (o null si es nuevo)
+  const [isUpdateConfirmOpen, setIsUpdateConfirmOpen] = useState(false) // estado: modal de confirmación antes de guardar edición
+  const [searchQuery, setSearchQuery] = useState('') // estado: texto de búsqueda por título o ID
+  const [currentPage, setCurrentPage] = useState(1) // estado: página actual del catálogo
+  const [successMessage, setSuccessMessage] = useState('') // estado: mensaje de éxito de la operación
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false) // estado: modal de confirmación exitosa
 
+  // Filtra los libros en memoria según el ID o título buscado
   const filteredBooks = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
 
@@ -48,14 +50,17 @@ export const useBooksPage = () => {
 
   const totalPages = Math.max(1, Math.ceil(filteredBooks.length / pageSize))
 
+  // Reinicia a la primera página si cambia la búsqueda
   useEffect(() => {
     setCurrentPage(1)
   }, [searchQuery])
 
+  // Ajusta la página si se redujo el total de páginas
   useEffect(() => {
     setCurrentPage((page) => Math.min(page, totalPages))
   }, [totalPages])
 
+  // Segmenta la lista para paginación local de 10 elementos por página
   const paginatedBooks = useMemo(() => {
     const start = (currentPage - 1) * pageSize
     return filteredBooks.slice(start, start + pageSize)
@@ -99,7 +104,7 @@ export const useBooksPage = () => {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
-  // Valida los campos y construye el formato que espera la API.
+  // Valida los campos y construye el objeto de datos que espera la API
   const validateAndBuildPayload = (): BookPayload | null => {
     const titleError = validateBookTitle(form.title)
     if (titleError) {
@@ -161,6 +166,7 @@ export const useBooksPage = () => {
     }
   }
 
+  // HU-05: envía la creación o edición del libro a la API REST
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -201,6 +207,7 @@ export const useBooksPage = () => {
     setIsUpdateConfirmOpen(true)
   }
 
+  // HU-05: confirma y ejecuta la actualización en la API
   const confirmUpdate = async () => {
     if (editingBookId === null) {
       return

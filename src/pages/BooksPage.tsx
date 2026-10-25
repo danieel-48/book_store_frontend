@@ -1,4 +1,5 @@
-/** BooksPage: consulta y administra el catálogo de libros. Historia: HU-03. Props: ninguna; obtiene estado y acciones desde useBooksPage. */
+// BooksPage: consulta, filtra y administra el catálogo de libros · HU-05 inventario de libros
+// Props: ninguna (página conectada a AppRouter)
 import { Pencil } from 'lucide-react'
 import { MessageModal } from '@/components/MessageModal.tsx'
 import { Modal } from '@/components/Modal.tsx'
@@ -8,6 +9,7 @@ import { BookFormModal } from '@/components/books/BookFormModal.tsx'
 import { useBooksPage } from '@/hooks/books/useBooksPage.ts'
 
 export const BooksPage = () => {
+  // Hook que coordina carga, búsqueda, paginación y mutaciones en la API (HU-05)
   const {
     books,
     searchQuery,
@@ -41,12 +43,14 @@ export const BooksPage = () => {
         title="Inventario"
         description="Administre libros, niveles de existencia y precios."
         actions={
+          /* onClick abre el modal para registrar un nuevo libro (HU-05) */
           <button className="rounded-xl bg-slate-900 px-4 py-2 text-white" onClick={openModal}>
             Nuevo libro
           </button>
         }
       />
 
+      {/* Campo de búsqueda rápida por identificador o título */}
       <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <label className="grid gap-1 text-sm text-slate-700">
           Buscar por ID o título
@@ -59,6 +63,7 @@ export const BooksPage = () => {
         </label>
       </div>
 
+      {/* Tabla con listado del catálogo de libros */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="hidden grid-cols-[1.7fr_1fr_1fr_120px_120px] gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 md:grid">
           <span>Libro</span>
@@ -90,6 +95,7 @@ export const BooksPage = () => {
               <div>
                 <p className="text-xs uppercase tracking-[0.18em] text-slate-400 md:hidden">Acciones</p>
                 <div className="flex gap-2">
+                  {/* onClick abre el formulario modal cargando los datos del libro para editarlo */}
                   <button
                     type="button"
                     aria-label="Editar libro"
@@ -105,6 +111,7 @@ export const BooksPage = () => {
         </div>
       </div>
 
+      {/* Controles de paginación de libros */}
       <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <p>
           Mostrando {books.length} de {filteredBooksCount} libros (página {currentPage} de {totalPages})
@@ -129,6 +136,7 @@ export const BooksPage = () => {
         </div>
       </div>
 
+      {/* Modal con formulario para registrar o actualizar un libro (HU-05) */}
       <BookFormModal
         title={editingBookId === null ? 'Crear libro' : 'Actualizar libro'}
         isOpen={isModalOpen}
@@ -141,6 +149,7 @@ export const BooksPage = () => {
         submitLabel={editingBookId === null ? 'Guardar' : 'Actualizar'}
       />
 
+      {/* Modal de confirmación para actualizar libro */}
       <Modal title="Confirmar actualización" isOpen={isUpdateConfirmOpen} onClose={cancelUpdateConfirmation}>
         <div className="space-y-4">
           <p className="text-sm text-slate-600">¿Está seguro de que desea actualizar este libro?</p>
@@ -155,6 +164,7 @@ export const BooksPage = () => {
         </div>
       </Modal>
 
+      {/* Modal emergente que informa éxito de la operación */}
       <MessageModal message={successMessage} isOpen={isSuccessModalOpen} onClose={closeSuccessModal} />
     </div>
   )

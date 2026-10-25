@@ -1,10 +1,11 @@
+// services/salesService.ts: comunicación con la API REST de AA3 (/api/sales y /api/sale-details)
 import { apiRequest } from '@/services/api.ts'
 import type { SaleDetail, SaleDetailPayload, SalePayload, SaleRecord } from '@/types/sale.ts'
 
-/** salesService: registra ventas (/api/sales) y sus detalles (/api/sale-details). */
 export const salesService = {
-  // Crea la venta y luego cada detalle; la API calcula el total y descuenta el stock.
+  // HU-06: procesar y registrar una venta junto con sus ítems en la API
   create: async (payload: SalePayload, items: Omit<SaleDetailPayload, 'idSale'>[]) => {
+    // Registra la cabecera de la venta (cliente, usuario vendedor y fecha)
     const created = await apiRequest<SaleRecord>('/api/sales', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -12,6 +13,7 @@ export const salesService = {
 
     const details: SaleDetail[] = []
 
+    // Registra cada ítem vendido asociado al identificador de la venta
     for (const item of items) {
       details.push(
         await apiRequest<SaleDetail>('/api/sale-details', {
@@ -21,6 +23,7 @@ export const salesService = {
       )
     }
 
+    // Consulta la venta consolidada con su total general calculado
     const sale = await apiRequest<SaleRecord>(`/api/sales/${created.idSale}`)
 
     return { sale, details }

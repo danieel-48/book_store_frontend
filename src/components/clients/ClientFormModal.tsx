@@ -1,4 +1,5 @@
-/** ClientFormModal: captura los datos de creación o edición de un cliente. Historia: HU-04. Props: ClientFormModalProps (estado, callbacks, errores y etiquetas del formulario). */
+// ClientFormModal: modal con formulario para crear o editar un cliente · HU-04 gestión de clientes
+// Props: title (título modal), isOpen (visibilidad), onClose (cierre), form (datos del cliente), onFieldChange (callback cambio), onSubmit (envío formulario), submitError (error validación), submitLabel (texto botón)
 import { Modal } from '@/components/Modal.tsx'
 import type { ClientFormState } from '@/types/client.ts'
 
@@ -25,6 +26,7 @@ export const ClientFormModal = ({
 }: ClientFormModalProps) => {
   return (
     <Modal title={title} isOpen={isOpen} onClose={onClose}>
+      {/* onSubmit procesa la validación y envía los datos del cliente a la API (HU-04) */}
       <form className="grid gap-3" onSubmit={onSubmit}>
         <label className="grid gap-1 text-sm text-slate-700">
           Nombre
@@ -64,6 +66,7 @@ export const ClientFormModal = ({
           />
         </label>
         {submitError ? <p className="text-sm text-rose-600">{submitError}</p> : null}
+        {/* Botón de envío: guarda o actualiza el cliente en la API según submitLabel */}
         <button className="rounded-xl bg-slate-900 px-4 py-2 text-white">{submitLabel}</button>
       </form>
     </Modal>

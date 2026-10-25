@@ -1,3 +1,5 @@
+// useUsersPage: gestiona el perfil del usuario logeado (HU-03) y administración de personal (HU-08)
+// Retorna: estados y manejadores de la página de usuarios
 import { useState } from 'react'
 import { useAuth } from '@/app/useAuth'
 import { useUsers } from '@/hooks/users/useUsers.ts'
@@ -12,24 +14,24 @@ const emptyUser: UserPayload = {
   role: 'EMPLOYEE',
 }
 
-/** useUsersPage: gestiona registro y búsqueda por correo de usuarios, consulta de perfil del usuario logeado y edición. */
 export const useUsersPage = () => {
   const { user, updateSessionUser } = useAuth()
   const { users, error: usersError, createUser, findByEmail, updateUser } = useUsers()
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingUserId, setEditingUserId] = useState<number | null>(null)
-  const [form, setForm] = useState<UserPayload>(emptyUser)
-  const [submitError, setSubmitError] = useState('')
-  const [searchEmail, setSearchEmail] = useState('')
-  const [searchError, setSearchError] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false) // estado: visibilidad del modal de usuario
+  const [editingUserId, setEditingUserId] = useState<number | null>(null) // estado: ID del usuario en edición (null si es nuevo)
+  const [form, setForm] = useState<UserPayload>(emptyUser) // estado: campos del formulario de usuario
+  const [submitError, setSubmitError] = useState('') // estado: mensaje de error de validación o del servidor
+  const [searchEmail, setSearchEmail] = useState('') // estado: correo ingresado en el buscador
+  const [searchError, setSearchError] = useState('') // estado: error al buscar usuario por correo
 
-  const [loggedUserProfile, setLoggedUserProfile] = useState<User | null>(null)
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
-  const [profileError, setProfileError] = useState('')
+  const [loggedUserProfile, setLoggedUserProfile] = useState<User | null>(null) // estado: datos del perfil del usuario logeado
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false) // estado: indicador de consulta de perfil en curso
+  const [profileError, setProfileError] = useState('') // estado: error al consultar perfil propio
 
   const loggedUserEmail =
     user?.email && user.email !== 'admin@bookstore.test' ? user.email : 'ana12345@test.com'
 
+  // HU-03: consulta el perfil del usuario logeado en la API (/api/users/profile?email=...)
   const loadLoggedUserProfile = async (emailOverride?: string) => {
     const emailToQuery = emailOverride || loggedUserEmail
     setIsLoadingProfile(true)
@@ -50,6 +52,7 @@ export const useUsersPage = () => {
     setProfileError('')
   }
 
+  // HU-08: busca usuario por correo en la API (/api/users/profile?email=...)
   const search = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const email = searchEmail.trim()
@@ -92,6 +95,7 @@ export const useUsersPage = () => {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
+  // HU-03 / HU-08: valida y envía creación o edición de usuario a la API REST
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 

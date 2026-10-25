@@ -1,10 +1,12 @@
-/** UsersPage: permite al administrador registrar usuarios y consultarlos por correo, y a los usuarios consultar y editar su información de perfil. */
+// UsersPage: permite consultar y editar el perfil logeado (HU-03) y administrar usuarios del sistema (HU-08)
+// Props: ninguna (página conectada a AppRouter)
 import { UserCheck } from 'lucide-react'
 import { Modal } from '@/components/Modal.tsx'
 import { SectionHeader } from '@/components/SectionHeader.tsx'
 import { useUsersPage } from '@/hooks/users/useUsersPage.ts'
 
 export const UsersPage = () => {
+  // Hook que administra la consulta de perfil (HU-03), búsqueda, registro y edición de usuarios (HU-08)
   const {
     currentUser,
     users,
@@ -42,6 +44,7 @@ export const UsersPage = () => {
         }
         actions={
           <div className="flex flex-wrap items-center gap-2">
+            {/* HU-03: consulta a la API el perfil del usuario actualmente autenticado */}
             <button
               type="button"
               className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
@@ -51,6 +54,7 @@ export const UsersPage = () => {
               <UserCheck className="h-4 w-4 text-slate-500" />
               {isLoadingProfile ? 'Consultando perfil...' : 'Ver información del usuario logeado'}
             </button>
+            {/* HU-08: abre modal para registrar un nuevo usuario en el sistema */}
             {isAdmin ? (
               <button
                 type="button"
@@ -77,6 +81,7 @@ export const UsersPage = () => {
         </div>
       ) : null}
 
+      {/* HU-03: tarjeta con la información detallada del usuario logeado */}
       {loggedUserProfile ? (
         <section className="mb-6 rounded-2xl border-2 border-slate-900 bg-slate-50 p-5 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -101,6 +106,7 @@ export const UsersPage = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {/* HU-03: abre el modal para editar los datos del perfil propio */}
               <button
                 type="button"
                 className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800"
@@ -126,6 +132,7 @@ export const UsersPage = () => {
         </p>
       ) : (
         <>
+          {/* HU-08: buscador de usuarios por correo electrónico */}
           <form className="mb-5 flex flex-wrap items-center gap-2" onSubmit={(event) => void search(event)}>
             <input
               className="min-w-[260px] rounded-xl border border-slate-200 px-4 py-2 text-sm"
@@ -140,6 +147,7 @@ export const UsersPage = () => {
           </form>
           {usersError ? <p className="mb-4 text-sm text-rose-600">{usersError}</p> : null}
 
+          {/* HU-08: listado de usuarios con opción de edición */}
           <div className="grid gap-4 md:grid-cols-2">
             {users.map((item) => (
               <article key={item.id} className="rounded-2xl border border-slate-200 p-4 shadow-sm">
@@ -153,6 +161,7 @@ export const UsersPage = () => {
                     {item.active ? 'Activo' : 'Inactivo'}
                   </p>
                 </div>
+                {/* HU-08: abre modal de edición de datos de usuario seleccionado */}
                 <button
                   type="button"
                   className="mt-4 rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 hover:bg-slate-200 transition"
@@ -166,6 +175,7 @@ export const UsersPage = () => {
         </>
       )}
 
+      {/* Modal para creación (HU-08) o edición (HU-03 / HU-08) de usuario */}
       <Modal title={editingUserId === null ? 'Crear usuario' : 'Editar usuario'} isOpen={isModalOpen} onClose={closeModal}>
         <form className="grid gap-3" onSubmit={submit}>
           <label className="grid gap-1 text-sm text-slate-700">

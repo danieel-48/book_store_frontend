@@ -1,3 +1,5 @@
+// CartQuantityInput: controla la cantidad de libros en el carrito sin exceder el stock · HU-06 ventas POS
+// Props: quantity (cantidad actual), stock (existencia disponible), onChange (callback de actualización al padre)
 import { useState } from 'react'
 
 type CartQuantityInputProps = {
@@ -6,10 +8,10 @@ type CartQuantityInputProps = {
   onChange: (quantity: number) => void
 }
 
-/** CartQuantityInput: permite borrar y reescribir la cantidad; nunca supera el stock ni baja de 1. */
 export const CartQuantityInput = ({ quantity, stock, onChange }: CartQuantityInputProps) => {
-  const [draft, setDraft] = useState<string | null>(null)
+  const [draft, setDraft] = useState<string | null>(null) // estado: texto temporal mientras el usuario digita
 
+  // Valida que el valor ingresado sea numérico, al menos 1 y no supere el stock (HU-06)
   const handleChange = (raw: string) => {
     const digits = raw.replace(/\D/g, '')
 

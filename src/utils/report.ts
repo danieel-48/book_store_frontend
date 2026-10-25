@@ -1,3 +1,5 @@
+// utils/report.ts: procesamiento y consolidación de reportes de ventas por período · HU-07 reportes de ventas
+// Funciones exportadas: buildReport
 import type { Book } from '@/types/book.ts'
 import type { Client } from '@/types/client.ts'
 import type { User } from '@/types/user.ts'
@@ -6,7 +8,7 @@ import { buildSale } from '@/utils/sale.ts'
 
 const periodLength = { daily: 10, monthly: 7, yearly: 4 } as const
 
-// Agrupa las ventas por periodo y aplica los filtros de fecha y libro.
+// HU-07: agrupa las ventas por período (día, mes, año) y aplica filtros por fecha, libro, cliente y usuario
 export const buildReport = (
   data: ReportData,
   books: Book[],

@@ -1,7 +1,9 @@
+// services/reportsService.ts: comunicación con la API REST de AA3 (/api/sales y /api/sale-details)
 import { apiRequest } from '@/services/api.ts'
 import type { ReportData, ReportFilters } from '@/types/report.ts'
 import type { SaleDetail, SaleRecord } from '@/types/sale.ts'
 
+// Construye la query string para filtrar ventas por cliente y/o usuario vendedor
 const toQueryString = (filters: ReportFilters) => {
   const params = new URLSearchParams()
 
@@ -12,8 +14,8 @@ const toQueryString = (filters: ReportFilters) => {
   return query ? `?${query}` : ''
 }
 
-/** reportsService: obtiene los detalles de venta (/api/sale-details) y las ventas filtradas por cliente y usuario. */
 export const reportsService = {
+  // HU-07: consultar el historial de ventas y sus detalles para generar reportes
   sales: async (filters: ReportFilters): Promise<ReportData> => {
     const [sales, details] = await Promise.all([
       apiRequest<SaleRecord[]>(`/api/sales${toQueryString(filters)}`),

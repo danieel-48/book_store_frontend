@@ -1,4 +1,5 @@
-/** ClientsPage: consulta y administra los clientes registrados. Historia: HU-04. Props: ninguna; obtiene estado y acciones desde useClientsPage. */
+// ClientsPage: consulta, registra y administra los clientes del sistema · HU-04 gestión de clientes
+// Props: ninguna (página conectada a AppRouter)
 import { Pencil } from 'lucide-react'
 import { MessageModal } from '@/components/MessageModal.tsx'
 import { Modal } from '@/components/Modal.tsx'
@@ -7,6 +8,7 @@ import { ClientFormModal } from '@/components/clients/ClientFormModal.tsx'
 import { useClientsPage } from '@/hooks/clients/useClientsPage.ts'
 
 export const ClientsPage = () => {
+  // Hook que administra la lista de clientes, formulario modal y mutaciones en la API (HU-04)
   const {
     clients,
     clientsCount,
@@ -38,12 +40,14 @@ export const ClientsPage = () => {
         title="Clientes"
         description="Registros de clientes para agilizar el cobro y los reportes."
         actions={
+          /* onClick abre el formulario modal para registrar un nuevo cliente con datos obligatorios (HU-04) */
           <button className="rounded-xl bg-slate-900 px-4 py-2 text-white" onClick={openModal}>
             Nuevo cliente
           </button>
         }
       />
 
+      {/* Tabla con el listado de clientes registrados */}
       <div className="overflow-hidden rounded-2xl border border-slate-200">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-600">
@@ -64,6 +68,7 @@ export const ClientsPage = () => {
                 <td className="px-4 py-3">{client.phone}</td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
+                    {/* onClick abre el modal cargando la información del cliente para editarlo */}
                     <button
                       type="button"
                       aria-label="Editar cliente"
@@ -80,6 +85,7 @@ export const ClientsPage = () => {
         </table>
       </div>
 
+      {/* Paginación de clientes */}
       {totalPages > 1 ? (
         <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <p>
@@ -118,6 +124,7 @@ export const ClientsPage = () => {
         </div>
       ) : null}
 
+      {/* Modal con formulario para capturar o editar datos del cliente (HU-04) */}
       <ClientFormModal
         title={editingClientId === null ? 'Crear cliente' : 'Actualizar cliente'}
         isOpen={isModalOpen}
@@ -129,6 +136,7 @@ export const ClientsPage = () => {
         submitLabel={editingClientId === null ? 'Guardar' : 'Actualizar'}
       />
 
+      {/* Modal de confirmación previo a actualizar datos de un cliente */}
       <Modal title="Confirmar actualización" isOpen={isUpdateConfirmOpen} onClose={cancelUpdateConfirmation}>
         <div className="space-y-4">
           <p className="text-sm text-slate-600">¿Está seguro de que desea actualizar este cliente?</p>
@@ -143,6 +151,7 @@ export const ClientsPage = () => {
         </div>
       </Modal>
 
+      {/* Modal emergente que informa el resultado exitoso */}
       <MessageModal message={successMessage} isOpen={isSuccessModalOpen} onClose={closeSuccessModal} />
     </div>
   )

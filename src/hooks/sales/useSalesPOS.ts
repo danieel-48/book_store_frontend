@@ -1,3 +1,5 @@
+// useSalesPOS: administra el carrito de compras, valida existencias y registra ventas · HU-06 punto de venta
+// Retorna: estados y funciones para el proceso de compra / facturación
 import { useMemo, useState } from 'react'
 import { useAuth } from '@/app/useAuth'
 import { useBooks } from '@/hooks/books/useBooks.ts'
@@ -8,19 +10,18 @@ import type { CartItem, Sale } from '@/types/sale.ts'
 import { toLocalDateTime } from '@/utils/format.ts'
 import { buildSale } from '@/utils/sale.ts'
 
-/** useSalesPOS: administra el carrito, valida existencias y registra ventas. */
 export const useSalesPOS = () => {
   const { user } = useAuth()
   const { books, isLoading: isBooksLoading, error: booksError, createBook, reload: reloadBooks } = useBooks()
   const { clients, createClient, reload } = useClients()
-  const [cart, setCart] = useState<CartItem[]>([])
-  const [clientId, setClientId] = useState<number | null>(null)
-  const [lastSale, setLastSale] = useState<Sale | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [saleError, setSaleError] = useState('')
+  const [cart, setCart] = useState<CartItem[]>([]) // estado: artículos en el carrito de compras
+  const [clientId, setClientId] = useState<number | null>(null) // estado: ID del cliente seleccionado
+  const [lastSale, setLastSale] = useState<Sale | null>(null) // estado: venta finalizada para comprobante
+  const [isSubmitting, setIsSubmitting] = useState(false) // estado: indicador de registro en proceso
+  const [saleError, setSaleError] = useState('') // estado: mensaje de error durante la venta
   const sellableBooks = useMemo(() => books.filter((book) => book.price > 0 && book.stock > 0), [books])
 
-  // Impide agregar libros sin stock o superar la existencia disponible.
+  // Impide agregar libros sin stock o superar la existencia disponible
   const addBook = (bookId: number) => {
     const book = sellableBooks.find((item) => item.id === bookId)
     if (!book || book.stock <= 0) return
@@ -58,6 +59,7 @@ export const useSalesPOS = () => {
 
   const subtotal = useMemo(() => cart.reduce((sum, item) => sum + item.book.price * item.quantity, 0), [cart])
 
+  // HU-06: valida existencias en tiempo real, registra venta y detalles en la API y recarga stock
   const completeSale = async (): Promise<boolean> => {
     if (!clientId || cart.length === 0) {
       setSaleError('Seleccione un cliente y agregue artículos antes de completar la venta.')
@@ -68,7 +70,7 @@ export const useSalesPOS = () => {
     setIsSubmitting(true)
 
     try {
-      // Se consulta el stock actual para no crear una venta que luego falle a mitad.
+      // Se consulta el stock actual para no crear una venta que luego falle a mitad
       const freshBooks = await booksService.list()
       const insufficient = cart.find((item) => {
         const current = freshBooks.find((book) => book.id === item.book.id)

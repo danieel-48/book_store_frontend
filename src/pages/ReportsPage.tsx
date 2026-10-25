@@ -1,4 +1,5 @@
-/** ReportsPage: filtra y presenta reportes de ventas. Historia: HU-06. Props: ninguna; obtiene filtros y resultados desde useReportsPage. */
+// ReportsPage: consulta y filtra el historial de ventas, métricas y comprobantes en PDF · HU-07 reportes de ventas
+// Props: ninguna (página conectada a AppRouter)
 import { Eye, FileDown } from 'lucide-react'
 import { Modal } from '@/components/Modal.tsx'
 import { SectionHeader } from '@/components/SectionHeader.tsx'
@@ -7,6 +8,7 @@ import { getSaleNumber } from '@/utils/sale.ts'
 import { useReportsPage } from '@/hooks/reports/useReportsPage.ts'
 
 export const ReportsPage = () => {
+  // Hook que coordina la carga de ventas, clientes, libros, filtros y exportación PDF (HU-07)
   const {
     tabs,
     filters,
@@ -32,6 +34,7 @@ export const ReportsPage = () => {
     exportPdf,
     exportSaleBill,
   } = useReportsPage()
+
   const periodLabels: Record<(typeof tabs)[number], string> = {
     daily: 'Diario',
     monthly: 'Mensual',
@@ -44,6 +47,7 @@ export const ReportsPage = () => {
         title="Reportes"
         description="Ventas diarias, mensuales y anuales con filtros y exportación."
         actions={
+          // HU-07: genera y descarga el reporte consolidado en PDF
           <button className="rounded-xl bg-slate-900 px-4 py-2 text-white" onClick={exportPdf}>
             Exportar a PDF
           </button>
@@ -52,6 +56,7 @@ export const ReportsPage = () => {
 
       <div className="mb-4 flex flex-wrap gap-2">
         {tabs.map((tab) => (
+          // Cambia el período de agregación (diario, mensual, anual)
           <button
             key={tab}
             className={`rounded-xl px-4 py-2 text-sm font-medium ${
@@ -168,14 +173,14 @@ export const ReportsPage = () => {
 
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-400 md:hidden">Fecha</p>
-                                    <p className="text-sm text-slate-700">{formatDateTime(sale.date)}</p>
-                                    <p className="text-xs text-slate-500">Usuario: {sale.user?.name ?? sale.idUser ?? 'N/D'}</p>
+                  <p className="text-sm text-slate-700">{formatDateTime(sale.date)}</p>
+                  <p className="text-xs text-slate-500">Usuario: {sale.user?.name ?? sale.idUser ?? 'N/D'}</p>
                 </div>
 
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-400 md:hidden">Cliente</p>
-                                    <p className="text-sm font-medium text-slate-900">{sale.client?.name ?? `Cliente #${sale.idClient}`}</p>
-                                    <p className="text-xs text-slate-500">{sale.client?.email || 'Sin correo'}</p>
+                  <p className="text-sm font-medium text-slate-900">{sale.client?.name ?? `Cliente #${sale.idClient}`}</p>
+                  <p className="text-xs text-slate-500">{sale.client?.email || 'Sin correo'}</p>
                 </div>
 
                 <div>
@@ -188,16 +193,18 @@ export const ReportsPage = () => {
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-slate-400 md:hidden">Acciones</p>
                   <div className="flex flex-wrap gap-2">
+                    {/* HU-07: abre modal para visualizar detalles de los artículos vendidos */}
                     <button
                       aria-label="Ver detalle de la venta"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
                       onClick={() => setSelectedSale(sale)}
                     >
                       <Eye className="h-4 w-4" />
                     </button>
+                    {/* HU-07: exporta comprobante individual de venta en formato PDF */}
                     <button
                       aria-label="Exportar comprobante"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-white"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition"
                       onClick={() => exportSaleBill(sale)}
                     >
                       <FileDown className="h-4 w-4" />
@@ -265,12 +272,13 @@ export const ReportsPage = () => {
             <div key={row.period} className="rounded-xl bg-slate-50 p-3">
               <p className="font-medium text-slate-900">{row.period}</p>
               <p className="mt-1 text-sm text-slate-600">              Ventas: {row.salesCount}</p>
-                            <p className="text-sm text-slate-600">Total: {formatCurrency(Number(row.totalAmount))}</p>
+              <p className="text-sm text-slate-600">Total: {formatCurrency(Number(row.totalAmount))}</p>
             </div>
           ))}
         </div>
       </section>
 
+      {/* HU-07: modal para visualizar los detalles de la venta seleccionada */}
       <Modal title="Detalle de la venta" size="lg" isOpen={Boolean(selectedSale)} onClose={() => setSelectedSale(null)}>
         {selectedSale ? (
           <div>
@@ -289,9 +297,9 @@ export const ReportsPage = () => {
                 <tbody>
                   {selectedSale.items.map((item) => (
                     <tr key={item.idDetail} className="border-t border-slate-200">
-                                          <td className="px-3 py-2">{item.bookTitle}</td>
+                      <td className="px-3 py-2">{item.bookTitle}</td>
                       <td className="px-3 py-2">{item.quantity}</td>
-                                          <td className="px-3 py-2">{formatCurrency(item.total)}</td>
+                      <td className="px-3 py-2">{formatCurrency(item.total)}</td>
                     </tr>
                   ))}
                 </tbody>

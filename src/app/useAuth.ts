@@ -1,3 +1,5 @@
+// useAuth: hook personalizado para acceder al contexto global de autenticación · HU-01 inicio de sesión
+// Retorna: { user, login, logout, updateSessionUser }
 import { useContext } from 'react'
 import { AuthContext } from '@/app/auth-context'
 

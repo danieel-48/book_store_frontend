@@ -1,3 +1,5 @@
+// useClientsPage: coordina formulario, validaciones, paginación y confirmaciones de clientes · HU-04 gestión de clientes
+// Retorna: estados y manejadores de la vista de clientes
 import { useEffect, useMemo, useState } from 'react'
 import { useClients } from '@/hooks/clients/useClients.ts'
 import type { Client, ClientFormState, ClientPayload } from '@/types/client.ts'
@@ -15,18 +17,17 @@ const emptyClient: ClientFormState = {
   phone: '',
 }
 
-/** useClientsPage: gestiona el formulario, validaciones, paginación y confirmaciones de clientes. */
 export const useClientsPage = () => {
   const { clients, createClient, updateClient } = useClients()
   const pageSize = 15
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [form, setForm] = useState<ClientFormState>(emptyClient)
-  const [submitError, setSubmitError] = useState('')
-  const [editingClientId, setEditingClientId] = useState<number | null>(null)
-  const [isUpdateConfirmOpen, setIsUpdateConfirmOpen] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [successMessage, setSuccessMessage] = useState('')
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false) // estado: visibilidad del modal de formulario
+  const [form, setForm] = useState<ClientFormState>(emptyClient) // estado: datos del formulario de cliente
+  const [submitError, setSubmitError] = useState('') // estado: mensaje de error de validación o del servidor
+  const [editingClientId, setEditingClientId] = useState<number | null>(null) // estado: ID del cliente en edición (null si es nuevo)
+  const [isUpdateConfirmOpen, setIsUpdateConfirmOpen] = useState(false) // estado: modal de confirmación antes de actualizar
+  const [currentPage, setCurrentPage] = useState(1) // estado: página activa de la lista
+  const [successMessage, setSuccessMessage] = useState('') // estado: texto de confirmación exitosa
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false) // estado: visibilidad del modal de éxito
 
   const totalPages = Math.max(1, Math.ceil(clients.length / pageSize))
 
@@ -120,6 +121,7 @@ export const useClientsPage = () => {
     }
   }
 
+  // HU-04: registra o actualiza el cliente en la API y refresca la vista
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -160,6 +162,7 @@ export const useClientsPage = () => {
     setIsUpdateConfirmOpen(true)
   }
 
+  // HU-04: confirma la actualización del cliente en la API
   const confirmUpdate = async () => {
     if (editingClientId === null) {
       return

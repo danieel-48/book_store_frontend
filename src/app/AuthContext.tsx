@@ -1,4 +1,5 @@
-/** AuthProvider: mantiene la sesión del usuario (guardada localmente) y su expiración por inactividad. Props: children, contenido de la aplicación. */
+// AuthProvider: gestiona el estado global de autenticación y la inactividad de sesión · HU-01 inicio de sesión
+// Props: children (componentes hijos de la aplicación)
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { authService } from '@/services/authService.ts'
 import type { AuthUser, LoginPayload } from '@/types/auth.ts'
@@ -7,6 +8,7 @@ import { AuthContext } from '@/app/auth-context'
 const SESSION_KEY = 'bookstore_user'
 const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000
 
+// Lee el usuario guardado en localStorage al iniciar la aplicación
 const readStoredUser = (): AuthUser | null => {
   try {
     const raw = localStorage.getItem(SESSION_KEY)
@@ -17,9 +19,10 @@ const readStoredUser = (): AuthUser | null => {
 }
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(readStoredUser)
+  const [user, setUser] = useState<AuthUser | null>(readStoredUser) // estado: usuario autenticado en la sesión
   const inactivityTimeoutRef = useRef<number | null>(null)
 
+  // Cierra la sesión activa, borra almacenamiento local y redirige a login
   const clearSession = useCallback(() => {
     localStorage.removeItem(SESSION_KEY)
     setUser(null)
@@ -29,11 +32,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [])
 
+  // Actualiza los datos de sesión tanto en memoria como en localStorage
   const updateSessionUser = useCallback((nextUser: AuthUser) => {
     localStorage.setItem(SESSION_KEY, JSON.stringify(nextUser))
     setUser(nextUser)
   }, [])
 
+  // HU-01: autentica al usuario contra la API y persiste su sesión
   const login = useCallback(
     async (payload: LoginPayload) => {
       updateSessionUser(await authService.login(payload))
@@ -43,6 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = clearSession
 
+  // HU-01: controla la expiración de la sesión por 10 minutos de inactividad del usuario
   useEffect(() => {
     if (!user) {
       if (inactivityTimeoutRef.current) {

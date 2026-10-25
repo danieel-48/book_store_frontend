@@ -1,8 +1,10 @@
-/** SidebarLayout: presenta navegación, sesión y contenido de las pantallas privadas. Historia: HU-08. Props: ninguna; consume el contexto de autenticación y renderiza la ruta activa. */
+// SidebarLayout: estructura principal con barra lateral de navegación y área de contenido · HU-01 sesión de usuario
+// Props: ninguna (layout base que consume useAuth y renderiza Outlet)
 import { BarChart3, Book, ClipboardList, Home, LogOut, ReceiptText, ShieldUser, Users } from 'lucide-react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '@/app/useAuth'
 
+// Enlaces de navegación con sus respectivas rutas e iconos del sistema
 const navItems = [
   { to: '/', label: 'Inicio', icon: Home },
   { to: '/sales', label: 'Ventas POS', icon: ReceiptText },
@@ -13,7 +15,7 @@ const navItems = [
 ]
 
 export const SidebarLayout = () => {
-  const { user, logout } = useAuth()
+  const { user, logout } = useAuth() // consume usuario de sesión activa y función de cierre (HU-01)
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -27,6 +29,7 @@ export const SidebarLayout = () => {
             </div>
           </div>
 
+          {/* Menú de navegación principal entre módulos */}
           <nav className="space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon
@@ -47,9 +50,11 @@ export const SidebarLayout = () => {
             })}
           </nav>
 
+          {/* Información del usuario logeado y acción de cierre de sesión (HU-01) */}
           <div className="mt-8 rounded-xl border border-slate-700 p-4 text-xs">
             <p className="font-semibold text-slate-200">{user?.name}</p>
             <p className="mt-1 text-slate-400">{user?.role === 'ADMIN' ? 'Administrador' : 'Empleado'}</p>
+            {/* onClick ejecuta logout para invalidar la sesión y redirigir a login */}
             <button
               onClick={() => logout()}
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-slate-100 hover:bg-slate-700"
@@ -60,6 +65,7 @@ export const SidebarLayout = () => {
           </div>
         </aside>
 
+        {/* Contenido principal de la página activa */}
         <main className="min-w-0 flex-1 rounded-3xl bg-white p-4 shadow-xl lg:p-6">
           <Outlet />
         </main>

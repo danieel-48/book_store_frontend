@@ -1,9 +1,9 @@
 /** AuthProvider: restaura y mantiene la sesión autenticada y su expiración por inactividad. Historia: HU-01. Props: children, contenido de la aplicación. */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { authService } from '../features/auth/services/authService'
-import type { AuthUser, LoginPayload } from '../features/auth/types/auth'
-import { clearStoredToken, getStoredToken, persistToken, setUnauthorizedHandler } from '../shared/utils/api'
-import { AuthContext } from './auth-context'
+import { authService } from '@/services/authService.ts'
+import type { AuthUser, LoginPayload } from '@/types/auth.ts'
+import { clearStoredToken, getStoredToken, persistToken, setUnauthorizedHandler } from '@/services/api.ts'
+import { AuthContext } from '@/app/auth-context'
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000

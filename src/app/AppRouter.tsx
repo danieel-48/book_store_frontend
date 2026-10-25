@@ -1,14 +1,14 @@
 /** AppRouter: conecta cada ruta con su pantalla y protege el área administrativa. Historias: HU-01, HU-08. Props: ninguna. */
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { LoginPage } from '../features/auth/components/LoginPage'
-import { BooksPage } from '../features/books/components/BooksPage'
-import { ClientsPage } from '../features/clients/components/ClientsPage'
-import { DashboardPage } from '../features/dashboard/components/DashboardPage'
-import { ReportsPage } from '../features/reports/components/ReportsPage'
-import { SalesPage } from '../features/sales/components/SalesPage'
-import { UsersPage } from '../features/users/components/UsersPage'
-import { SidebarLayout } from '../shared/components/SidebarLayout'
-import { ProtectedRoute } from './ProtectedRoute'
+import { LoginPage } from '@/pages/LoginPage.tsx'
+import { BooksPage } from '@/pages/BooksPage.tsx'
+import { ClientsPage } from '@/pages/ClientsPage.tsx'
+import { DashboardPage } from '@/pages/DashboardPage.tsx'
+import { ReportsPage } from '@/pages/ReportsPage.tsx'
+import { SalesPage } from '@/pages/SalesPage.tsx'
+import { UsersPage } from '@/pages/UsersPage.tsx'
+import { SidebarLayout } from '@/components/SidebarLayout.tsx'
+import { ProtectedRoute } from '@/app/ProtectedRoute'
 
 export const AppRouter = () => (
   <Routes>

@@ -35,7 +35,7 @@ export const ClientFormModal = ({
           />
         </label>
         <label className="grid gap-1 text-sm text-slate-700">
-          Número de identificación (opcional)
+          Número de identificación
           <input
             inputMode="numeric"
             maxLength={15}
@@ -45,7 +45,7 @@ export const ClientFormModal = ({
           />
         </label>
         <label className="grid gap-1 text-sm text-slate-700">
-          Correo electrónico (opcional)
+          Correo electrónico
           <input
             type="email"
             className="rounded-xl border border-slate-200 px-4 py-2"
@@ -54,7 +54,7 @@ export const ClientFormModal = ({
           />
         </label>
         <label className="grid gap-1 text-sm text-slate-700">
-          Teléfono (opcional)
+          Teléfono
           <input
             inputMode="numeric"
             maxLength={10}

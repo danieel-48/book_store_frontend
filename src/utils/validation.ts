@@ -3,7 +3,7 @@ const PHONE_REGEX = /^\d{10}$/
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const DECIMAL_REGEX = /^\d+(\.\d{1,2})?$/
 const INTEGER_REGEX = /^\d+$/
-const TITLE_REGEX = /^[\p{L}\d\s'.:,()\-]+$/u
+const TITLE_REGEX = /^[\p{L}\d\s'.:,()-]+$/u
 
 export const isValidEmail = (value: string) => EMAIL_REGEX.test(value.trim())
 
@@ -34,6 +34,45 @@ export const validateLettersOnly = (label: string, value: string) => {
 
   if (!isLettersOnly(value)) {
     return `${label} debe contener solo letras.`
+  }
+
+  return ''
+}
+
+export const validateRequiredEmail = (label: string, value: string) => {
+  const required = validateRequiredText(label, value)
+  if (required) {
+    return required
+  }
+
+  if (!isValidEmail(value)) {
+    return `${label} debe ser un correo electrónico válido.`
+  }
+
+  return ''
+}
+
+export const validateRequiredPhone = (label: string, value: string) => {
+  const required = validateRequiredText(label, value)
+  if (required) {
+    return required
+  }
+
+  if (!isValidPhone(value)) {
+    return `${label} debe contener exactamente 10 números.`
+  }
+
+  return ''
+}
+
+export const validateRequiredIdNumber = (label: string, value: string) => {
+  const required = validateRequiredText(label, value)
+  if (required) {
+    return required
+  }
+
+  if (!isValidInteger(value)) {
+    return `${label} debe contener solo números.`
   }
 
   return ''

@@ -8,3 +8,9 @@ export type Book = {
 }
 
 export type BookPayload = Omit<Book, 'id'>
+
+export type BookFilters = {
+  category?: string
+  minPrice?: number | string
+  maxPrice?: number | string
+}

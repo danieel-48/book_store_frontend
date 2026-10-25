@@ -1,5 +1,5 @@
 /** SalesPage: registra ventas y permite consultar sus detalles. Historia: HU-05. Props: ninguna; delega estado y operaciones a useSalesPage. */
-import { CircleCheck, FileDown, Trash2 } from 'lucide-react'
+import { CircleCheck, FileDown, Filter, Trash2 } from 'lucide-react'
 import { BookFormModal } from '@/components/books/BookFormModal.tsx'
 import { ClientFormModal } from '@/components/clients/ClientFormModal.tsx'
 import { MessageModal } from '@/components/MessageModal.tsx'
@@ -44,6 +44,17 @@ export const SalesPage = () => {
     isBookModalOpen,
     isCreateSuccessModalOpen,
     removeItemTargetBookId,
+    filterCategory,
+    setFilterCategory,
+    filterMinPrice,
+    setFilterMinPrice,
+    filterMaxPrice,
+    setFilterMaxPrice,
+    filterError,
+    activeFiltersCount,
+    availableCategories,
+    applyBookFilters,
+    clearBookFilters,
     updateClientForm,
     setBookTitle,
     setBookAuthor,
@@ -168,6 +179,93 @@ export const SalesPage = () => {
         </div>
       </section>
 
+      {/* Apartado para filtrar libros por categoría y precio */}
+      <section className="mb-6 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-slate-700" />
+            <h2 className="text-sm font-semibold text-slate-800">Filtrar libros por categoría y precio</h2>
+            {activeFiltersCount > 0 ? (
+              <span className="rounded-full bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-white">
+                {activeFiltersCount} activo{activeFiltersCount > 1 ? 's' : ''}
+              </span>
+            ) : null}
+          </div>
+          {activeFiltersCount > 0 ? (
+            <button
+              type="button"
+              onClick={() => void clearBookFilters()}
+              className="text-xs font-medium text-slate-500 underline transition hover:text-slate-800"
+            >
+              Restablecer filtros
+            </button>
+          ) : null}
+        </div>
+
+        <form onSubmit={(e) => void applyBookFilters(e)} className="flex flex-wrap items-end gap-3">
+          <label className="min-w-[240px] flex-[2] grid gap-1 text-sm font-medium text-slate-700">
+            Categoría
+            <input
+              type="text"
+              list="sales-categories-list"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-slate-400"
+              placeholder="Ej: Fantasia"
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+            />
+            <datalist id="sales-categories-list">
+              {availableCategories.map((cat) => (
+                <option key={cat} value={cat} />
+              ))}
+            </datalist>
+          </label>
+
+          <label className="min-w-[150px] flex-1 grid gap-1 text-sm font-medium text-slate-700">
+            Precio mínimo
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-slate-400"
+              placeholder="Ej: 10"
+              value={filterMinPrice}
+              onChange={(e) => setFilterMinPrice(e.target.value)}
+            />
+          </label>
+
+          <label className="min-w-[150px] flex-1 grid gap-1 text-sm font-medium text-slate-700">
+            Precio máximo
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-slate-400"
+              placeholder="Ej: 50"
+              value={filterMaxPrice}
+              onChange={(e) => setFilterMaxPrice(e.target.value)}
+            />
+          </label>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="submit"
+              className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+            >
+              Filtrar
+            </button>
+            <button
+              type="button"
+              onClick={() => void clearBookFilters()}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+            >
+              Limpiar
+            </button>
+          </div>
+        </form>
+
+        {filterError ? <p className="mt-2 text-xs font-medium text-rose-600">{filterError}</p> : null}
+      </section>
+
       <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
         <section>
           {isBooksLoading ? <p className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-600">Cargando libros...</p> : null}
@@ -258,46 +356,37 @@ export const SalesPage = () => {
           {saleError ? <p className="mt-3 text-sm text-slate-600">{saleError}</p> : null}
         </section>
 
-        <aside className="h-fit rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-700 shadow-sm lg:sticky lg:top-6">
-          <h3 className="text-lg font-semibold text-slate-900">Carrito</h3>
-          <div className="mt-3 max-h-[38vh] space-y-3 overflow-y-auto pr-1 sm:max-h-[50vh]">
-            {cart.length === 0 ? <p className="text-sm text-slate-500">No hay artículos seleccionados.</p> : null}
+        <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-slate-900">Carrito de compras</h2>
+          <div className="space-y-3">
             {cart.map((item) => (
-              <article key={item.book.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-                <div className="flex items-start gap-2">
-                  <p className="line-clamp-2 min-w-0 flex-1 text-sm font-semibold leading-5 text-slate-900">{item.book.title}</p>
+              <div key={item.book.id} className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="min-w-0 pr-3">
+                  <p className="truncate text-sm font-medium text-slate-900">{item.book.title}</p>
+                  <p className="text-xs text-slate-500">{formatCurrency(item.book.price)} c/u</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CartQuantityInput
+                    quantity={item.quantity}
+                    stock={item.book.stock}
+                    onChange={(next) => updateQuantity(item.book.id, next)}
+                  />
                   <button
-                    type="button"
-                    aria-label="Eliminar artículo"
-                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-rose-200 bg-white text-slate-600 transition hover:bg-rose-50"
                     onClick={() => requestRemoveItemConfirmation(item.book.id)}
+                    className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                    aria-label={`Eliminar ${item.book.title} del carrito`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
-                <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-2.5">
-                  <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Cant.
-                    <CartQuantityInput
-                      quantity={item.quantity}
-                      stock={item.book.stock}
-                      onChange={(quantity) => updateQuantity(item.book.id, quantity)}
-                    />
-                  </label>
-                  <p className="text-sm font-semibold text-slate-800">{formatCurrency(item.book.price * item.quantity)}</p>
-                </div>
-              </article>
+              </div>
             ))}
           </div>
-          <div className="mt-4 border-t border-slate-200 pt-3">
-            <div className="flex justify-between text-sm text-slate-600">
-              <span>Subtotal</span>
-              <span className="font-semibold text-slate-900">{formatCurrency(subtotal)}</span>
-            </div>
-            <div className="mt-1.5 flex justify-between text-base font-semibold text-slate-900">
-              <span>Total</span>
-              <span>{formatCurrency(subtotal)}</span>
-            </div>
+
+          <div className="mt-4 space-y-1 text-right text-sm">
+            <p className="text-slate-500">Subtotal: {formatCurrency(subtotal)}</p>
+            <p className="text-slate-500">IVA (19%): {formatCurrency(subtotal * 0.19)}</p>
+            <p className="text-lg font-bold text-slate-900">Total: {formatCurrency(subtotal * 1.19)}</p>
           </div>
         </aside>
       </div>
@@ -310,7 +399,7 @@ export const SalesPage = () => {
         onFieldChange={updateClientForm}
         onSubmit={submitClient}
         submitError={clientSubmitError}
-        submitLabel="Crear"
+        submitLabel="Guardar"
       />
 
       <BookFormModal
@@ -335,16 +424,30 @@ export const SalesPage = () => {
         }}
         onSubmit={submitBook}
         submitError={bookSubmitError}
-        submitLabel="Crear"
+        submitLabel="Guardar"
       />
 
-      <MessageModal message={createSuccessMessage} isOpen={isCreateSuccessModalOpen} onClose={closeCreateSuccessModal} />
+      <MessageModal
+        title="Creación exitosa"
+        message={createSuccessMessage}
+        isOpen={isCreateSuccessModalOpen}
+        onClose={closeCreateSuccessModal}
+      />
 
-      <Modal title="Confirmar eliminación" isOpen={removeItemTargetBookId !== null} onClose={cancelRemoveItemConfirmation}>
+      <Modal
+        title="Confirmar eliminación de libro"
+        isOpen={removeItemTargetBookId !== null}
+        onClose={cancelRemoveItemConfirmation}
+      >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">¿Está seguro de que desea eliminar este artículo del carrito?</p>
+          <p className="text-sm text-slate-600">
+            ¿Está seguro de que desea eliminar este libro del carrito de compras?
+          </p>
           <div className="flex justify-end gap-2">
-            <button className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700" onClick={cancelRemoveItemConfirmation}>
+            <button
+              className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700"
+              onClick={cancelRemoveItemConfirmation}
+            >
               Cancelar
             </button>
             <button className="rounded-lg bg-rose-600 px-3 py-2 text-sm text-white" onClick={confirmRemoveItem}>
@@ -370,8 +473,8 @@ export const SalesPage = () => {
             </div>
             <p className="text-sm text-slate-600">            Venta #{lastSale.idSale}</p>
             <p className="text-sm text-slate-600">Número de venta: {getSaleNumber(lastSale)}</p>
-                        <p className="text-sm text-slate-600">Fecha: {formatDateTime(lastSale.date)}</p>
-                        <p className="text-sm text-slate-600">Cliente: {lastSale.client?.name ?? `#${lastSale.idClient}`}</p>
+            <p className="text-sm text-slate-600">Fecha: {formatDateTime(lastSale.date)}</p>
+            <p className="text-sm text-slate-600">Cliente: {lastSale.client?.name ?? `#${lastSale.idClient}`}</p>
             <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50">
@@ -384,9 +487,9 @@ export const SalesPage = () => {
                 <tbody>
                   {lastSale.items.map((item) => (
                     <tr key={item.idDetail} className="border-t border-slate-200">
-                                          <td className="px-3 py-2">{item.bookTitle}</td>
+                      <td className="px-3 py-2">{item.bookTitle}</td>
                       <td className="px-3 py-2">{item.quantity}</td>
-                                          <td className="px-3 py-2">{formatCurrency(item.total)}</td>
+                      <td className="px-3 py-2">{formatCurrency(item.total)}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { booksService } from '@/services/booksService.ts'
-import type { Book, BookPayload } from '@/types/book.ts'
+import type { Book, BookFilters, BookPayload } from '@/types/book.ts'
 
 /** useBooks: carga el catálogo y expone operaciones CRUD que refrescan la lista. HU-03. */
 export const useBooks = () => {
@@ -8,10 +8,10 @@ export const useBooks = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const loadBooks = useCallback(async () => {
+  const loadBooks = useCallback(async (filters?: BookFilters) => {
     setIsLoading(true)
     try {
-      setBooks(await booksService.list())
+      setBooks(await booksService.list(filters))
       setError('')
     } catch (exception) {
       setBooks([])
@@ -22,11 +22,7 @@ export const useBooks = () => {
   }, [])
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadBooks()
-    }, 0)
-
-    return () => window.clearTimeout(timer)
+    void loadBooks()
   }, [loadBooks])
 
   const createBook = async (payload: BookPayload) => {

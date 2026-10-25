@@ -1,31 +1,15 @@
-# Frontend de BookStore
-
-Aplicación web para administrar libros, clientes, ventas, usuarios y reportes de una libreria. Esta construida con React, TypeScript, Vite y Tailwind CSS, y consume la API REST de BookStore.
-
-## Estructura
-
-- `src/components/`: componentes reutilizables y formularios modales.
-- `src/pages/`: pantallas conectadas por las rutas.
-- `src/services/`: comunicación con la API.
-- `src/hooks/`: lógica reutilizable de la interfaz.
-- `src/types/`: tipos del dominio.
-- `src/utils/`: formato, validación y utilidades.
-- `src/app/`: enrutamiento y estado de autenticación.
-
-## Tabla de trazabilidad
+## Tabla de trazabilidad de historias de usuario
 
 Configura `VITE_API_URL` en `.env` con la URL base del servidor, por ejemplo `http://localhost:8080`. Los servicios agregan sus rutas `/api/...`; los componentes no conocen la URL base.
 
-| Historia de usuario           | Componente(s) | Archivo | Endpoint de la API (AA3) |
-| --- | --- | --- | --- |
-| HU-01 Registro (crear cuenta) | `UsersPage` · `useUsersPage` | `pages/UsersPage.tsx` | `POST /api/auth/register` (consulta: `GET /api/users/profile?email=`) |
-| HU-02 Inicio de sesión        | `LoginPage` · `useLoginForm` · `ProtectedRoute` | `pages/LoginPage.tsx` | `POST /api/auth/login` (sin JWT; la sesión guarda el usuario devuelto) |
-| HU-03 Perfil de usuario       | `UsersPage` · `useUsersPage` · `AuthContext` | `pages/UsersPage.tsx` | `GET /api/users/profile?email=` · `PUT /api/users/{id}` |
-| HU-04 Buscar libros           | `BooksPage` (campo de búsqueda) | `pages/BooksPage.tsx` | `GET /api/books` (búsqueda por ID/título en el cliente) |
-| HU-05 Filtrar libros          | `BooksPage` · `ReportsPage` (filtros por libro, cliente, usuario y periodo) | `pages/BooksPage.tsx` | `GET /api/books` · `GET /api/sales?idClient=&idUser=` · `GET /api/sale-details` |
-| HU-06 Ver detalle del libro   | `BookFormModal` | `components/books/BookFormModal.tsx` | `GET /api/books` (alta: `POST /api/books`, edición: `PUT /api/books/{id}`; no hay eliminación) |
-| HU-07 Agregar al carrito      | `SalesPage` · `useSalesPOS` | `pages/SalesPage.tsx` | `GET /api/books` (el carrito se maneja en el estado del cliente) |
-| HU-08 Comprar libros          | `SalesPage` · `useSalesPage` | `pages/SalesPage.tsx` | `POST /api/sales` + `POST /api/sale-details` |
-| HU-9 Ver historial de compras | `ReportsPage` · `SalesPage` (detalle) | `pages/ReportsPage.tsx` | `GET /api/sales` · `GET /api/sale-details` |
+| Historia de usuario | Funcionalidad en la aplicación | Componente(s) | Archivo | Endpoint de la API |
+| --- | --- | --- | --- | --- |
+| **HU-01: Inicio y control de sesión** | Autenticación con correo y contraseña, protección de rutas privadas y cierre de sesión manual o automático por inactividad. | `LoginPage` · `useLoginForm` · `ProtectedRoute` · `AuthContext` | `src/pages/LoginPage.tsx` | `POST /api/auth/login` |
+| **HU-02: Panel de control (Dashboard)** | Resumen general con indicadores clave (ventas totales, ingresos recaudados, títulos en catálogo y existencias) y accesos directos. | `DashboardPage` · `useDashboard` | `src/pages/DashboardPage.tsx` | `GET /api/books` · `GET /api/sales` |
+| **HU-03: Perfil del usuario logeado** | Consulta de la información del usuario autenticado y edición de sus datos reutilizando el modal y la ruta de actualización. | `UsersPage` · `useUsersPage` · `Modal` | `src/pages/UsersPage.tsx` | `GET /api/users/profile?email=` · `PUT /api/users/{id}` |
+| **HU-04: Gestión de clientes** | Consulta paginada, edición y registro de clientes con campos obligatorios (nombre, cédula/identificación, correo electrónico y teléfono). | `ClientsPage` · `useClientsPage` · `ClientFormModal` | `src/pages/ClientsPage.tsx` | `GET /api/clients` · `POST /api/clients` · `PUT /api/clients/{id}` |
+| **HU-05: Inventario y catálogo de libros** | Visualización paginada, búsqueda por ID/título, filtrado por precio y stock, así como registro y edición de libros. | `BooksPage` · `useBooksPage` · `BookFormModal` | `src/pages/BooksPage.tsx` | `GET /api/books` · `POST /api/books` · `PUT /api/books/{id}` |
+| **HU-06: Ventas POS y facturación** | Selección de cliente, filtrado de libros por categoría y precio (`/api/books?category=&minPrice=&maxPrice=`), carrito interactivo con control de existencias, cálculo de impuestos, registro de venta y generación de factura PDF. | `SalesPage` · `useSalesPOS` · `useSalesPage` · `CartQuantityInput` | `src/pages/SalesPage.tsx` | `POST /api/sales` · `POST /api/sale-details` · `GET /api/books?category=&minPrice=&maxPrice=` · `GET /api/clients` |
+| **HU-07: Reportes e historial de ventas** | Historial de transacciones con filtros por cliente, vendedor y fechas, detalle de artículos vendidos y exportación de reportes a PDF. | `ReportsPage` · `useReportsPage` | `src/pages/ReportsPage.tsx` | `GET /api/sales` · `GET /api/sale-details` |
+| **HU-08: Administración de personal** | Registro de nuevos usuarios con rol (`ADMIN`/`EMPLOYEE`), búsqueda por correo y listado de usuarios del sistema (exclusivo para ADMIN). | `UsersPage` · `useUsersPage` | `src/pages/UsersPage.tsx` | `POST /api/auth/register` · `GET /api/users` · `GET /api/users/profile?email=` · `PUT /api/users/{id}` |
 
-> Nota: la aplicación es un panel administrativo/POS de libreria (rol `ADMIN`/`EMPLOYEE`). Las historias de comprador se implementan desde el punto de vista del personal que opera la venta.

@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useClients } from '@/hooks/clients/useClients.ts'
 import type { Client, ClientFormState, ClientPayload } from '@/types/client.ts'
-import { validateLettersOnly, validateOptionalEmail, validateOptionalPhone } from '@/utils/validation.ts'
+import {
+  validateLettersOnly,
+  validateRequiredEmail,
+  validateRequiredIdNumber,
+  validateRequiredPhone,
+} from '@/utils/validation.ts'
 
 const emptyClient: ClientFormState = {
   idNumber: '',
@@ -82,7 +87,6 @@ export const useClientsPage = () => {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
-  // Solo el nombre es obligatorio; el resto de campos se normalizan a null si están vacíos.
   const validateAndBuildPayload = (): ClientPayload | null => {
     const nameError = validateLettersOnly('Nombre', form.name)
     if (nameError) {
@@ -90,23 +94,29 @@ export const useClientsPage = () => {
       return null
     }
 
-    const emailError = validateOptionalEmail('Correo electrónico', form.email)
+    const idNumberError = validateRequiredIdNumber('Número de identificación', form.idNumber)
+    if (idNumberError) {
+      setSubmitError(idNumberError)
+      return null
+    }
+
+    const emailError = validateRequiredEmail('Correo electrónico', form.email)
     if (emailError) {
       setSubmitError(emailError)
       return null
     }
 
-    const phoneError = validateOptionalPhone('Teléfono', form.phone)
+    const phoneError = validateRequiredPhone('Teléfono', form.phone)
     if (phoneError) {
       setSubmitError(phoneError)
       return null
     }
 
     return {
-      idNumber: form.idNumber.trim() ? Number(form.idNumber) : null,
+      idNumber: Number(form.idNumber.trim()),
       name: form.name.trim(),
-      email: form.email.trim() || null,
-      phone: form.phone.trim() ? Number(form.phone) : null,
+      email: form.email.trim(),
+      phone: Number(form.phone.trim()),
     }
   }
 

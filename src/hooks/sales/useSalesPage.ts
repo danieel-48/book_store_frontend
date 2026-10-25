@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ClientFormState } from '@/types/client.ts'
-import type { BookPayload } from '@/types/book.ts'
+import type { BookFilters, BookPayload } from '@/types/book.ts'
 import { exportSaleBillPdf } from '@/utils/pdf.ts'
-import { isValidDecimal, isValidInteger, validateBookTitle, validateLettersOnly, validateOptionalEmail, validateOptionalPhone } from '@/utils/validation.ts'
+import {
+  isValidDecimal,
+  isValidInteger,
+  validateBookTitle,
+  validateLettersOnly,
+  validateRequiredEmail,
+  validateRequiredIdNumber,
+  validateRequiredPhone,
+} from '@/utils/validation.ts'
 import { useSalesPOS } from '@/hooks/sales/useSalesPOS.ts'
 
 const emptyClientForm: ClientFormState = {
@@ -43,6 +51,74 @@ export const useSalesPage = () => {
   const [createSuccessMessage, setCreateSuccessMessage] = useState('')
   const [isCreateSuccessModalOpen, setIsCreateSuccessModalOpen] = useState(false)
   const [removeItemTargetBookId, setRemoveItemTargetBookId] = useState<number | null>(null)
+
+  // Estados para filtro por categoría y precio en Sales
+  const [filterCategory, setFilterCategory] = useState('')
+  const [filterMinPrice, setFilterMinPrice] = useState('')
+  const [filterMaxPrice, setFilterMaxPrice] = useState('')
+  const [filterError, setFilterError] = useState('')
+  const [activeFiltersCount, setActiveFiltersCount] = useState(0)
+
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>()
+    sales.books.forEach((b) => {
+      if (b.category?.trim()) {
+        set.add(b.category.trim())
+      }
+    })
+    return Array.from(set).sort()
+  }, [sales.books])
+
+  const applyBookFilters = async (event?: React.FormEvent) => {
+    if (event) {
+      event.preventDefault()
+    }
+
+    setFilterError('')
+
+    const min = filterMinPrice.trim() !== '' ? Number(filterMinPrice) : undefined
+    const max = filterMaxPrice.trim() !== '' ? Number(filterMaxPrice) : undefined
+
+    if (min !== undefined && (isNaN(min) || min < 0)) {
+      setFilterError('El precio mínimo debe ser un número mayor o igual a 0.')
+      return
+    }
+
+    if (max !== undefined && (isNaN(max) || max < 0)) {
+      setFilterError('El precio máximo debe ser un número mayor o igual a 0.')
+      return
+    }
+
+    if (min !== undefined && max !== undefined && min > max) {
+      setFilterError('El precio mínimo no puede ser mayor que el precio máximo.')
+      return
+    }
+
+    const filters: BookFilters = {
+      category: filterCategory.trim() || undefined,
+      minPrice: filterMinPrice.trim() !== '' ? filterMinPrice.trim() : undefined,
+      maxPrice: filterMaxPrice.trim() !== '' ? filterMaxPrice.trim() : undefined,
+    }
+
+    let count = 0
+    if (filters.category) count++
+    if (filters.minPrice !== undefined) count++
+    if (filters.maxPrice !== undefined) count++
+    setActiveFiltersCount(count)
+
+    setBooksPage(1)
+    await sales.reloadBooks(filters)
+  }
+
+  const clearBookFilters = async () => {
+    setFilterCategory('')
+    setFilterMinPrice('')
+    setFilterMaxPrice('')
+    setFilterError('')
+    setActiveFiltersCount(0)
+    setBooksPage(1)
+    await sales.reloadBooks()
+  }
 
   const totalBooksPages = Math.max(1, Math.ceil(sales.books.length / booksPageSize))
 
@@ -163,19 +239,25 @@ export const useSalesPage = () => {
   const submitClient = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    const nameError = validateLettersOnly('Client name', clientForm.name)
+    const nameError = validateLettersOnly('Nombre', clientForm.name)
     if (nameError) {
       setClientSubmitError(nameError)
       return
     }
 
-    const emailError = validateOptionalEmail('Client email', clientForm.email)
+    const idNumberError = validateRequiredIdNumber('Número de identificación', clientForm.idNumber)
+    if (idNumberError) {
+      setClientSubmitError(idNumberError)
+      return
+    }
+
+    const emailError = validateRequiredEmail('Correo electrónico', clientForm.email)
     if (emailError) {
       setClientSubmitError(emailError)
       return
     }
 
-    const phoneError = validateOptionalPhone('Client phone', clientForm.phone)
+    const phoneError = validateRequiredPhone('Teléfono', clientForm.phone)
     if (phoneError) {
       setClientSubmitError(phoneError)
       return
@@ -183,10 +265,10 @@ export const useSalesPage = () => {
 
     try {
       const client = await sales.createClient({
-        idNumber: clientForm.idNumber.trim() ? Number(clientForm.idNumber) : null,
+        idNumber: Number(clientForm.idNumber.trim()),
         name: clientForm.name.trim(),
-        email: clientForm.email.trim() || null,
-        phone: clientForm.phone.trim() ? Number(clientForm.phone) : null,
+        email: clientForm.email.trim(),
+        phone: Number(clientForm.phone.trim()),
       })
       sales.setClientId(client.idClient)
       setClientSearch(`${client.idClient} - ${client.name}`)
@@ -194,10 +276,10 @@ export const useSalesPage = () => {
       setClientForm(emptyClientForm)
       setClientSubmitError('')
       setIsClientModalOpen(false)
-      setCreateSuccessMessage('Client created successfully.')
+      setCreateSuccessMessage('Cliente creado correctamente.')
       setIsCreateSuccessModalOpen(true)
     } catch (error) {
-      setClientSubmitError(error instanceof Error ? error.message : 'Failed to create client.')
+      setClientSubmitError(error instanceof Error ? error.message : 'Error al crear el cliente.')
     }
   }
 
@@ -347,6 +429,17 @@ export const useSalesPage = () => {
     removeItemTargetBookId,
     filteredClients,
     filteredBooks,
+    filterCategory,
+    setFilterCategory,
+    filterMinPrice,
+    setFilterMinPrice,
+    filterMaxPrice,
+    setFilterMaxPrice,
+    filterError,
+    activeFiltersCount,
+    availableCategories,
+    applyBookFilters,
+    clearBookFilters,
     updateClientForm,
     setBookTitle,
     setBookAuthor,

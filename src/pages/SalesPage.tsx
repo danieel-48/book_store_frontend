@@ -398,8 +398,7 @@ export const SalesPage = () => {
 
           <div className="mt-4 space-y-1 text-right text-sm">
             <p className="text-slate-500">Subtotal: {formatCurrency(subtotal)}</p>
-            <p className="text-slate-500">IVA (19%): {formatCurrency(subtotal * 0.19)}</p>
-            <p className="text-lg font-bold text-slate-900">Total: {formatCurrency(subtotal * 1.19)}</p>
+            <p className="text-lg font-bold text-slate-900">Total: {formatCurrency(subtotal)}</p>
           </div>
         </aside>
       </div>
